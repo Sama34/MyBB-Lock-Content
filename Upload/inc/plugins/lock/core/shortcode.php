@@ -8,7 +8,7 @@
  *
  *    Website: https://ougc.network
  *
- *    Lock is a MyBB plugin for hiding content and selling it for your Newpoints currency.
+ *    Allow users to hide content in their posts in exchange of replies or NewPoints currency.
  *
  ***************************************************************************
  ****************************************************************************

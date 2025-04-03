@@ -8,7 +8,7 @@
  *
  *    Website: https://ougc.network
  *
- *    Lock is a MyBB plugin for hiding content and selling it for your Newpoints currency.
+ *    Allow users to hide content in their posts in exchange of replies or NewPoints currency.
  *
  ***************************************************************************
  ****************************************************************************
@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 $l['lock'] = 'Lock';
-$l['lock_desc'] = 'Lock es un complemento para ocultar contenido que se muestra cuando el usuario responde al hilo o paga puntos de Newpoints.';
+$l['lock_desc'] = 'Lock es un complemento para ocultar contenido que se muestra cuando el usuario responde al hilo o paga puntos de NewPoints.';
 
 $l['lock_nopermission_reply'] = 'Para ver el contenido oculto necesitas responder a este tema.';
 $l['lock_nopermission_guest'] = "Para ver el contenido oculto necesitas <a href=\"{1}/member.php?action=register\">registrarte</a> o <a href=\"{1}/member.php?action=login\">iniciar sesión</a>.";

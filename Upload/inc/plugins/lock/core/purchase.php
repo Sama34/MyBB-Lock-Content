@@ -8,7 +8,7 @@
  *
  *    Website: https://ougc.network
  *
- *    Lock is a MyBB plugin for hiding content and selling it for your Newpoints currency.
+ *    Allow users to hide content in their posts in exchange of replies or NewPoints currency.
  *
  ***************************************************************************
  ****************************************************************************
@@ -28,12 +28,12 @@
 
 declare(strict_types=1);
 
-use function Newpoints\Core\log_add;
-use function Newpoints\Core\points_add_simple;
-use function Newpoints\Core\points_subtract;
+use function NewPoints\Core\log_add;
+use function NewPoints\Core\points_add_simple;
+use function NewPoints\Core\points_subtract;
 
-use const Newpoints\Core\LOGGING_TYPE_CHARGE;
-use const Newpoints\Core\LOGGING_TYPE_INCOME;
+use const NewPoints\Core\LOGGING_TYPE_CHARGE;
+use const NewPoints\Core\LOGGING_TYPE_INCOME;
 
 global $mybb, $db;
 
@@ -108,7 +108,7 @@ if ($info = json_decode($json)) {
             } else {
                 // take the points from the user
 
-                if (function_exists('\Newpoints\Core\log_add')) {
+                if (function_exists('\NewPoints\Core\log_add')) {
                     points_subtract($current_user_id, $lock_price);
 
                     log_add(
@@ -149,7 +149,7 @@ if ($info = json_decode($json)) {
 
                 // give them to the creator of the post
 
-                if (function_exists('\Newpoints\Core\log_add')) {
+                if (function_exists('\NewPoints\Core\log_add')) {
                     points_add_simple($post_user_id, $lock_price);
 
                     log_add(
