@@ -3,8 +3,8 @@
 /***************************************************************************
  *
  *    Lock plugin (/inc/plugins/lock/core/shortcode.php)
- *    Author: Omar Gonzalez
- *    Copyright: © 2020 Omar Gonzalez
+ *    Author: Neko
+ *    Maintainer: Omar Gonzalez
  *
  *    Website: https://ougc.network
  *
