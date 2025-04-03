@@ -8,7 +8,7 @@
  *
  *    Website: https://ougc.network
  *
- *    Allow users to hide content in their posts in exchange of replies or NewPoints currency.
+ *    Allow users to hide content in their posts in exchange for replies or NewPoints currency.
  *
  ***************************************************************************
  ****************************************************************************

@@ -8,7 +8,7 @@
  *
  *    Website: https://ougc.network
  *
- *    Allow users to hide content in their posts in exchange of replies or NewPoints currency.
+ *    Allow users to hide content in their posts in exchange for replies or NewPoints currency.
  *
  ***************************************************************************
  ****************************************************************************
@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 $l['lock'] = 'Lock';
-$l['lock_desc'] = 'Allow users to hide content in their posts in exchange of replies or NewPoints currency.';
+$l['lock_desc'] = 'Allow users to hide content in their posts in exchange for replies or NewPoints currency.';
 
 $l['lock_nopermission_reply'] = 'You must reply to this thread to view this content.';
 $l['lock_nopermission_guest'] = "You must <a href=\"{1}/member.php?action=register\">register</a> or <a href=\"{1}/member.php?action=login\">login</a> to view this content.";

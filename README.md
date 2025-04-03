@@ -17,7 +17,7 @@
 
 ---
 
-<p align="center"> Allow users to hide content in their posts in exchange of replies or NewPoints currency.
+<p align="center"> Allow users to hide content in their posts in exchange for replies or NewPoints currency.
     <br> 
 </p>
 
@@ -39,7 +39,7 @@
 
 ## 🚀 About <a name = "about"></a>
 
-...
+Allow users to hide content in their posts in exchange for replies or NewPoints currency.
 
 [Go up to Table of Contents](#table_of_contents)
 
@@ -87,8 +87,8 @@ A setup that meets the following requirements is necessary to use this plugin.
 
 Follow the next steps in order to install a copy of this plugin on your forum.
 
-1. Download the latest package from one of the following sources:
-    - ...
+1. Download the latest package from the [MyBB Extend](https://community.mybb.com/mods.php) site or
+   from the [repository releases](https://github.com/OUGC-Network/MyBB-Lock-Content/releases/latest).
 2. Upload the contents of the _Upload_ folder to your MyBB root directory.
 3. Browse to _Configuration » Plugins_ and install this plugin by clicking _Install & Activate_.
 

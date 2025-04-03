@@ -8,7 +8,7 @@
  *
  *    Website: https://ougc.network
  *
- *    Allow users to hide content in their posts in exchange of replies or NewPoints currency.
+ *    Allow users to hide content in their posts in exchange for replies or NewPoints currency.
  *
  ***************************************************************************
  ****************************************************************************
@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 $l['lock'] = 'Lock';
-$l['lock_desc'] = 'Allow users to hide content in their posts in exchange of replies or NewPoints currency.';
+$l['lock_desc'] = 'Allow users to hide content in their posts in exchange for replies or NewPoints currency.';
 
 $l['lock_pluginlibrary'] = "This plugin requires <a href=\"{1}\">PluginLibrary</a> version {2} or later to be uploaded to your forum. Please upload the necessary files before continuing.";
 
