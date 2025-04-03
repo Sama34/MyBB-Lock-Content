@@ -58,8 +58,8 @@ function lock_info(): array
         'website' => 'https://ougc.network',
         'author' => 'Omar G.',
         'authorsite' => 'https://ougc.network',
-        'version' => '1.8.36',
-        'versioncode' => 1836,
+        'version' => '1.8.37',
+        'versioncode' => 1837,
         'compatibility' => '18*',
         'codename' => 'ougc_lock',
         'pl' => [
