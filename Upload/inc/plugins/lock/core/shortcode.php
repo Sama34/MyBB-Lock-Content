@@ -55,7 +55,7 @@ function lock_hide(array $params, string $content): string
         (!empty($mybb->settings['lock_purchases_enabled']) || (int)$mybb->settings['lock_default_price'] > 0)) {
         // is the pay to view feature allowed in this forum?
         $disabled = explode(',', $mybb->settings['lock_disabled_forums']);
-        if (!in_array($post['fid'], $disabled) || $mybb->settings['lock_disabled_forums'] == -1) {
+        if (!in_array($post['fid'], $disabled) || $mybb->settings['lock_disabled_forums'] === -1) {
             // does the content have a price? can the user set the price?
             if (!isset($params['cost'])) {
                 // if not, do we have a default price?
@@ -105,7 +105,7 @@ function lock_hide(array $params, string $content): string
 
     // if the user is not the OP, and has not been exempt from having hidden content
     if (
-        $mybb->user['uid'] != $post['uid'] &&
+        $mybb->user['uid'] !== $post['uid'] &&
         !is_member($mybb->settings['lock_exempt'])
     ) {
         // if the user isn't logged in, tell them to login or register.

@@ -114,7 +114,7 @@ Below you can find a description of the plugin settings.
     - _Allow users to sell locked content for newpoints credits._
 - **Allow User Prices** `yesNo`
     - _Do you want to let users set the price of their content?_
-- **Default Price** `numeric`
+- **Default Points** `numeric`
     - _The default price for hidden content. Set this to zero if you want hide tags to fall back to the "Reply to view"
       mode._
 - **Tax** `numeric`

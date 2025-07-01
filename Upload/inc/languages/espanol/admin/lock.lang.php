@@ -50,5 +50,4 @@ $l['setting_lock_disabled_forums_desc'] = 'Selecciona los foros en los cuales no
 $l['setting_lock_type'] = "Usar '[hide]' en lugar de '[lock'].";
 $l['setting_lock_type_desc'] = 'Puedes utilizar cualquiera de las palabras clave.';
 
-$l['lock_permission_maxcost'] = 'Maximo precio para contenido oculto.';
-$l['lock_permission_maxcost_desc'] = 'Coloca la cantidad maxima que los usuarios de este grupo pueden cobrar por contenido oculto. Deja vacio para no tener limite. (Maximo: 99999)';
+$l['lock_maxcost'] = 'Lock Content Limite de Puntos<br /><small class="input">El limite de puntos que los usuarios pueden cobrar para mostrar el contenido oculto. Dejar en 0 para no tener limite.<br />';

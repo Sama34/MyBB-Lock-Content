@@ -42,14 +42,12 @@ if (!defined('IN_MYBB')) {
 class Shortcodes
 {
 
-    private static array $shortcodes;
-    public static bool $strict;
+    private static array $shortcodes = [];
+    public static bool $strict = true;
     public static string $tag;
 
-    public function _construct(): void
+    public function __construct()
     {
-        $shortcodes = [];
-        $strict = true;
     }
 
     public static function set_tag(): void
@@ -121,7 +119,7 @@ class Shortcodes
             return $content;
         }
 
-        if (empty(self::$shortcodes) || !is_array(self::$shortcodes)) {
+        if (empty(self::$shortcodes)) {
             return $content;
         }
 
@@ -133,7 +131,7 @@ class Shortcodes
     private static function run_shortcode(array $m): string
     {
         // allow [[foo]] syntax for escaping a tag
-        if ($m[1] == '[' && $m[6] == ']') {
+        if ($m[1] === '[' && $m[6] === ']') {
             return substr($m[0], 1, -1);
         }
 
@@ -182,7 +180,7 @@ class Shortcodes
         if (
             !empty($mybb->usergroup['lock_maxcost']) === '' ||
             !function_exists('newpoints_format_points') ||
-            $ph->data['uid'] != $mybb->user['uid'] && is_moderator(
+            $ph->data['uid'] !== $mybb->user['uid'] && is_moderator(
                 $ph->data['fid']
             ) // but moderators could bypass this in others's posts? ...
         ) {
@@ -195,7 +193,6 @@ class Shortcodes
 
         if (
             empty(self::$shortcodes) ||
-            !is_array(self::$shortcodes) ||
             my_strpos($message, '[' . self::$tag) === false
         ) {
             return $ph;

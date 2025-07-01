@@ -38,9 +38,9 @@ $l['setting_lock_key_desc'] = "A password to keep spooky people from editing val
 $l['setting_lock_purchases_enabled'] = 'Enable NewPoints Purchases';
 $l['setting_lock_purchases_enabled_desc'] = 'Allow users to sell locked content for newpoints credits.';
 $l['setting_lock_allow_user_prices'] = 'Allow User Prices';
-$l['setting_lock_allow_user_prices_desc'] = 'Do you want to let users set the price of their content?';
-$l['setting_lock_default_price'] = 'Default Price';
-$l['setting_lock_default_price_desc'] = "The default price for hidden content. Set this to zero if you want hide tags to fall back to the \"Reply to view\" mode.";
+$l['setting_lock_allow_user_prices_desc'] = 'Do you want to let users set the points of their content?';
+$l['setting_lock_default_price'] = 'Default Points';
+$l['setting_lock_default_price_desc'] = "The default points for hidden content. Set this to zero if you want hide tags to fall back to the \"Reply to view\" mode.";
 $l['setting_lock_tax'] = 'Tax';
 $l['setting_lock_tax_desc'] = 'Tax a percentage of the points every user spends on content (up to 100%).';
 $l['setting_lock_exempt'] = 'Exempt Groups';
@@ -50,5 +50,4 @@ $l['setting_lock_disabled_forums_desc'] = "Select the forums that you do not wan
 $l['setting_lock_type'] = 'Tag Code';
 $l['setting_lock_type_desc'] = "You can either use a the wording '[hide]' or '[lock]'.";
 
-$l['lock_permission_maxcost'] = 'Maximum price per post.';
-$l['lock_permission_maxcost_desc'] = 'Insert the maximum NewPoints points users can charge to display hidden content. Leave empty for no limit. (Maximum: 99999)';
+$l['lock_maxcost'] = 'Lock Content Maximum Points<br /><small class="input">The maximum points users can charge to display hidden content. Leave zero for no limit.<br />';

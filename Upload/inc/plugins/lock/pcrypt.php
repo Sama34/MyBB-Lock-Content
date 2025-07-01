@@ -242,7 +242,7 @@ class pcrypt
             $block = $this->cipher->_decrypt($block);
 
             // Remove padded chars
-            while (substr($block, 0, 1) == "\0") {
+            while (substr($block, 0, 1) === "\0") {
                 $block = substr($block, 1);
             }
             $plain .= $block;
@@ -304,7 +304,7 @@ class pcrypt
             $lcipher = $block;
 
             // Remove padded chars
-            while (substr($dblock, 0, 1) == "\0") {
+            while (substr($dblock, 0, 1) === "\0") {
                 $dblock = substr($dblock, 1);
             }
             $plain .= $dblock;

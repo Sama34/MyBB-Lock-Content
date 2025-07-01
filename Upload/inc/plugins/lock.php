@@ -4,7 +4,7 @@
  *
  *    Lock plugin (/inc/plugins/lock.php)
  *    Author: Neko
- *    Maintainer: Omar Gonzalez
+ *    Maintainer: © 2024 Omar Gonzalez
  *
  *    Website: https://ougc.network
  *
@@ -28,7 +28,33 @@
 
 declare(strict_types=1);
 
-if (THIS_SCRIPT == 'showthread.php') {
+use function LockContent\Core\addHooks;
+
+use const LockContent\ROOT;
+use const Newpoints\Core\FORM_TYPE_NUMERIC_FIELD;
+use const Newpoints\DECIMAL_DATA_TYPE_SIZE;
+use const Newpoints\DECIMAL_DATA_TYPE_STEP;
+
+defined('IN_MYBB') || die('This file cannot be accessed directly.');
+
+define('LockContent\ROOT', constant('MYBB_ROOT') . 'inc/plugins/lock');
+
+require_once ROOT . '/core.php';
+
+defined('PLUGINLIBRARY') || define('PLUGINLIBRARY', constant('MYBB_ROOT') . 'inc/plugins/pluginlibrary.php');
+
+if (defined('IN_ADMINCP')) {
+    //require_once ROOT . '/admin.php';
+    require_once ROOT . '/hooks/admin.php';
+
+    addHooks('LockContent\Hooks\Admin');
+} else {
+    //require_once ROOT . '/hooks/forum.php';
+
+    addHooks('LockContent\Hooks\Forum');
+}
+
+if (THIS_SCRIPT === 'showthread.php') {
     global $templatelist;
 
     if (!isset($templatelist)) {
@@ -85,9 +111,6 @@ if (!defined('IN_ADMINCP')) {
     // validate maximum cost
     $plugins->add_hook('datahandler_post_validate_post', ['Shortcodes', 'validate_post']);
     $plugins->add_hook('datahandler_post_validate_thread', ['Shortcodes', 'validate_post']);
-} else {
-    $plugins->add_hook('admin_formcontainer_end', 'lock_admin_formcontainer_end');
-    $plugins->add_hook('admin_user_groups_edit_commit', 'lock_admin_user_groups_edit_commit');
 }
 
 if (!empty($mybb->input['highlight'])) {
@@ -144,7 +167,7 @@ function lock_is_installed(): bool
     return (bool)$db->field_exists('unlocked', 'posts');
 }
 
-function lock_highlight_start(string $message): string
+function lock_highlight_start(string &$message): string
 {
     global $mybb, $replacement;
 
@@ -171,7 +194,7 @@ function lock_highlight_start(string $message): string
     return $message;
 }
 
-function lock_highlight_end(string $message): string
+function lock_highlight_end(string &$message): string
 {
     global $mybb, $replacement;
 
@@ -215,63 +238,34 @@ function lock_quoted(array &$quoted_post): array
     return $quoted_post;
 }
 
-// Hook: admin_formcontainer_end
-function lock_admin_formcontainer_end(array &$args): array
-{
-    global $run_module, $form_container, $lang;
-
-    if ($run_module == 'user' && isset($form_container->_title) && $form_container->_title == $lang->users_permissions) {
-        global $form, $mybb;
-
-        isset($lang->lock) || $lang->load('lock');
-
-        $perms = [];
-
-        $db_fields = lock_get_db_fields();
-
-        foreach ($db_fields['usergroups'] as $name => $definition) {
-            $perms[] = "<br />{$lang->lock_permission_maxcost}<br /><small>{$lang->lock_permission_maxcost_desc}</small><br />{$form->generate_text_box($name, $mybb->get_input($name, MyBB::INPUT_STRING), ['id' => $name, 'class' => 'field50'])}";
-        }
-
-        $form_container->output_row(
-            $lang->setting_group_lock,
-            '',
-            '<div class="group_settings_bit">' . implode('</div><div class="group_settings_bit">', $perms) . '</div>'
-        );
-    }
-
-    return $args;
-}
-
-// Hook: admin_user_groups_edit_commit
-function lock_admin_user_groups_edit_commit(): bool
-{
-    global $updated_group, $mybb;
-
-    $db_fields = lock_get_db_fields();
-
-    foreach ($db_fields['usergroups'] as $name => $definition) {
-        $updated_group[$name] = $mybb->get_input($name, MyBB::INPUT_STRING);
-    }
-
-    return true;
-}
-
 function lock_get_db_fields(): array
 {
-    global $db;
-
-    // Create DB table
-    switch ($db->type) {
-        case 'pgsql':
-        default:
-            $fields = [
-                'usergroups' => [
-                    'lock_maxcost' => "VARCHAR(5) NOT NULL DEFAULT ''",
-                ]
-            ];
-            break;
+    if (defined('\Newpoints\DECIMAL_DATA_TYPE_SIZE')) {
+        return [
+            'usergroups' => [
+                'lock_maxcost' => [
+                    'type' => 'DECIMAL',
+                    'unsigned' => true,
+                    'size' => DECIMAL_DATA_TYPE_SIZE,
+                    'default' => 0,
+                    'form_type' => FORM_TYPE_NUMERIC_FIELD,
+                    'form_options' => [
+                        //'min' => 0,
+                        'step' => DECIMAL_DATA_TYPE_STEP,
+                    ],
+                ],
+            ],
+        ];
+    } else {
+        return [
+            'usergroups' => [
+                'lock_maxcost' => [
+                    'type' => 'DECIMAL',
+                    'unsigned' => true,
+                    'size' => '16,4',
+                    'default' => 0,
+                ],
+            ],
+        ];
     }
-
-    return $fields;
 }
