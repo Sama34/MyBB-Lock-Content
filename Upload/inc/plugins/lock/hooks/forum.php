@@ -31,8 +31,10 @@ declare(strict_types=1);
 namespace LockContent\Hooks\Forum;
 
 use Exception;
+use SodiumException;
 
 use function LockContent\Core\getSetting;
+use function LockContent\Core\loadLanguage;
 use function LockContent\Core\purchaseLogGet;
 use function LockContent\Core\purchaseLogInsert;
 use function LockContent\Core\safeDecrypt;
@@ -64,9 +66,6 @@ function global_start(): bool
     return true;
 }
 
-/**
- * @throws Exception
- */
 function showthread_start(): void
 {
     global $mybb, $db;
@@ -81,7 +80,13 @@ function showthread_start(): void
 
     verify_post_check($mybb->get_input('my_post_key'));
 
-    $json = safeDecrypt(base64_decode($mybb->get_input('info')), $mybb->post_code);
+    try {
+        $json = safeDecrypt(base64_decode($mybb->get_input('info')), $mybb->post_code);
+    } catch (Exception|SodiumException $exception) {
+        error_log($exception->getMessage());
+
+        return;
+    }
 
     $contentDetails = json_decode($json);
 
@@ -132,7 +137,7 @@ function showthread_start(): void
     // check to see whether the user has purchased this post's content
     if (!purchaseLogGet(["user_id={$current_user_id}", "post_id={$post_id}"], queryOptions: ['limit' => 1])) {
         if ($mybb->user['newpoints'] < $content_points) {
-            \LockContent\Core\loadLanguage();
+            loadLanguage();
 
             // user does not have enough funds to pay for the item
             error($lang->lock_purchase_error_no_funds);
@@ -259,7 +264,7 @@ function newpoints_logs_log_row(): bool
     global $lang;
     global $log_action, $log_primary, $log_secondary, $log_tertiary;
 
-    \LockContent\Core\loadLanguage();
+    loadLanguage();
 
     if ($log_data['action'] === 'lock_content_purchase') {
         $log_action = $lang->lock_content_newpoints_page_logs_purchase;
@@ -321,7 +326,7 @@ function newpoints_logs_end(): bool
     global $lang;
     global $action_types;
 
-    \LockContent\Core\loadLanguage();
+    loadLanguage();
 
     foreach ($action_types as $key => &$action_type) {
         if ($key === 'lock_content_purchase') {

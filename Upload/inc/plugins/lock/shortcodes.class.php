@@ -47,9 +47,6 @@ class Shortcodes
 
     public static bool $strict = true;
 
-    /**
-     * @throws RandomException
-     */
     public function __construct(
         public readonly string $lock_tag = 'hide',
         private string $highlightReplacement = '',
@@ -67,12 +64,13 @@ class Shortcodes
         return $this->lock_tag;
     }
 
-    /**
-     * @throws RandomException
-     */
     public function refresh_highlight_replacement(): void
     {
-        $this->highlightReplacement = bin2hex(random_bytes(10));
+        try {
+            $this->highlightReplacement = bin2hex(random_bytes(10));
+        } catch (RandomException $exception) {
+            error($exception->getMessage());
+        }
     }
 
     public function get_highlight_replacement(): string

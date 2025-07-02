@@ -174,10 +174,6 @@ function shortcodeObject(): Shortcodes
     return $lockedContent;
 }
 
-/**
- * @throws RandomException
- * @throws SodiumException
- */
 function hideMessageContents(array $attributes, string $message): string
 {
     global $mybb, $post, $lang, $db;
@@ -291,8 +287,13 @@ function hideMessageContents(array $attributes, string $message): string
             $contentDetails = json_encode($contentDetails);
 
             // encrypt the json, and encode it as base64; so it can be submitted in a form.
+            try {
+                $contentDetails = base64_encode(safeEncrypt($contentDetails, $mybb->post_code));
+            } catch (SodiumException|RandomException $exception) {
+                error_log($exception->getMessage());
 
-            $contentDetails = base64_encode(safeEncrypt($contentDetails, $mybb->post_code));
+                return '';
+            }
 
             static $posts_content_points = [];
 
@@ -363,6 +364,7 @@ function safeEncrypt(string $message, string $key): string
     if (mb_strlen($key, '8bit') !== SODIUM_CRYPTO_SECRETBOX_KEYBYTES) {
         throw new RangeException('Key is not the correct size (must be 32 bytes).');
     }
+
     $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
 
     $cipher = base64_encode(
@@ -387,12 +389,15 @@ function safeEncrypt(string $message, string $key): string
  * @param string $encrypted - message encrypted with safeEncrypt()
  * @param string $key - encryption key
  * @return string
+ * @throws SodiumException
  * @throws Exception
  */
 function safeDecrypt(string $encrypted, string $key): string
 {
     $decoded = base64_decode($encrypted);
+
     $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
+
     $ciphertext = mb_substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit');
 
     $plain = sodium_crypto_secretbox_open(
