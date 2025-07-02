@@ -88,11 +88,11 @@ function showthread_start(): void
 
     // if the data is indeed json data
     // if the data has been successfully turned back into an object.
-    $lock_price = (float)$info->cost;
+    $content_points = (float)$info->content_points;
 
-    $post_id = (int)$info->pid;
+    $post_id = (int)$info->post_id;
 
-    if (!$lock_price ||
+    if (!$content_points ||
         !$post_id ||
         (empty($mybb->settings['lock_allow_user_prices']) && getSetting('default_price') <= 0)) {
         error($lang->error_invalidpost);
@@ -112,14 +112,14 @@ function showthread_start(): void
 
     $post_user_id = (int)$post_data['uid'];
 
-    $higher_price = 0;
+    $higher_content_points = 0;
 
-    shortcodeObject()->get_higher_price_from_message($post_data['message'], $higher_price);
+    shortcodeObject()->get_higher_points_from_message($post_data['message'], $higher_content_points);
 
     if (!empty($mybb->settings['lock_allow_user_prices'])) {
-        $lock_price = max($higher_price, $lock_price); // too much?
+        $content_points = max($higher_content_points, $content_points); // too much?
     } else {
-        $lock_price = (float)getSetting('default_price');
+        $content_points = (float)getSetting('default_price');
     }
 
     // check whether the current user has already unlocked the content
@@ -129,21 +129,21 @@ function showthread_start(): void
 
     if (!in_array($current_user_id, $allowed)) {
         // user doesn't have it unlocked
-        if ($mybb->user['newpoints'] < $lock_price) {
+        if ($mybb->user['newpoints'] < $content_points) {
             // user does not have enough funds to pay for the item
             error('You do not have enough points to purchase this item.');
         }
 
         // take the points from the user
 
-        points_subtract($current_user_id, $lock_price);
+        points_subtract($current_user_id, $content_points);
 
         log_add(
             'lock_purchase',
             '',
             $mybb->user['username'] ?? '',
             $current_user_id,
-            $lock_price,
+            $content_points,
             $post_id,
             0,
             0,
@@ -154,26 +154,26 @@ function showthread_start(): void
             $tax = $mybb->settings['lock_tax'];
         }
 
-        $tax = (int)($tax ?? 0);
+        $tax = (float)($tax ?? 0);
 
         if ($tax > 100) {
             $tax = 100;
         }
 
         if ($tax) {
-            $lock_price = $lock_price - ($lock_price / 100 * $tax);
+            $content_points = $content_points - ($content_points / 100 * $tax);
         }
 
         // give them to the creator of the post
 
-        points_add_simple($post_user_id, $lock_price);
+        points_add_simple($post_user_id, $content_points);
 
         log_add(
             'lock_purchase',
             '',
             get_user($post_user_id)['username'] ?? '',
             $post_user_id,
-            $lock_price,
+            $content_points,
             $post_id,
             0,
             0,

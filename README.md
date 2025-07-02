@@ -71,10 +71,11 @@ A setup that meets the following requirements is necessary to use this plugin.
    │ │ │ ├── lock.lang.php
    │ ├── plugins
    │ │ ├── lock
-   │ │ │ ├── core
-   │ │ │ │ ├── shortcode.php
    │ │ │ ├── hooks
    │ │ │ │ ├── admin.php
+   │ │ │ │ ├── forum.php
+   │ │ │ │ ├── shared.php
+   │ │ │ ├── settings.json
    │ │ │ ├── admin.php
    │ │ │ ├── core.php
    │ │ │ ├── shortcodes.class.php

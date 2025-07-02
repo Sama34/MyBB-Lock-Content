@@ -62,17 +62,13 @@ if (defined('IN_ADMINCP')) {
     addHooks('LockContent\Hooks\Forum');
 }
 
+require_once ROOT . '/hooks/shared.php';
+
+addHooks('LockContent\Hooks\Shared');
+
 function lock_info(): array
 {
     return pluginInfo();
-}
-
-global $plugins;
-
-if (!defined('IN_ADMINCP')) {
-    // validate maximum cost
-    $plugins->add_hook('datahandler_post_validate_post', ['Shortcodes', 'validate_post']);
-    $plugins->add_hook('datahandler_post_validate_thread', ['Shortcodes', 'validate_post']);
 }
 
 if (!empty($mybb->input['highlight'])) {
@@ -97,5 +93,3 @@ function lock_is_installed(): bool
 {
     return pluginIsInstalled();
 }
-
-require_once __DIR__ . '/lock/core/shortcode.php';

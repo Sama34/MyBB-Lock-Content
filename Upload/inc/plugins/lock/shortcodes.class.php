@@ -41,18 +41,20 @@ if (!defined('IN_MYBB')) {
  **/
 class Shortcodes
 {
+    public array $shortcodes = [];
+
     public static bool $strict = true;
 
     public function __construct(
-        public string $tag = 'hide',
+        public readonly string $tag = 'hide',
         private string $highlight_replacement = '',
-        private array $shortcodes = [],
+        private readonly string $default_callback = 'LockContent\Core\hideMessageContents',
     ) {
         if ($highlight_replacement === '') {
             $this->refresh_highlight_replacement();
         }
 
-        $this->add($this->get_tag(), 'lock_hide');
+        $this->add($this->get_tag(), $this->default_callback);
     }
 
     public function get_tag(): string
@@ -74,7 +76,7 @@ class Shortcodes
         return $this->highlight_replacement;
     }
 
-    private function add(string $shortcode, string $function): void
+    private function add(string $shortcode, callable $function): void
     {
         if (is_callable($function)) {
             $this->shortcodes[$shortcode] = $function;
@@ -132,7 +134,7 @@ class Shortcodes
 
         $pattern = self::shortcode_regex();
 
-        return preg_replace_callback("/$pattern/s", Closure::fromCallable([self::class, 'run_shortcode']), $message);
+        return preg_replace_callback("/$pattern/s", \Shortcodes::run_shortcode(...), $message);
     }
 
     private function run_shortcode(array $m): string
@@ -180,66 +182,26 @@ class Shortcodes
         return $atts;
     }
 
-    public function validate_post(PostDataHandler &$ph): PostDataHandler
-    {
-        global $mybb, $lang;
-
-        if (
-            !empty($mybb->usergroup['lock_maxcost']) === '' ||
-            !function_exists('newpoints_format_points') ||
-            $ph->data['uid'] !== $mybb->user['uid'] && is_moderator(
-                $ph->data['fid']
-            ) // but moderators could bypass this in others's posts? ...
-        ) {
-            return $ph;
-        }
-
-        $message = $ph->data['message'];
-
-        if (
-            empty($this->shortcodes) ||
-            my_strpos($message, '[' . $this->get_tag()) === false
-        ) {
-            return $ph;
-        }
-
-        $price = 0;
-
-        shortcodeObject()->get_higher_price_from_message($message, $price);
-
-        if (!empty($mybb->usergroup['lock_maxcost']) && $price > (int)$mybb->usergroup['lock_maxcost'] && function_exists(
-                'newpoints_format_points'
-            )) {
-            isset($lang->lock) || $lang->load('lock');
-
-            $cost = newpoints_format_points((float)$mybb->usergroup['lock_maxcost']);
-
-            $ph->set_error($lang->sprintf($lang->lock_permission_maxcost, strip_tags($cost)));
-        }
-
-        return $ph;
-    }
-
-    public function get_higher_price_from_message(string $message, int &$higher_price): int
+    public function get_higher_points_from_message(string $message, float &$higher_content_points): float
     {
         $pattern = self::shortcode_regex();
 
         preg_match_all("/$pattern/s", $message, $matches, PREG_SET_ORDER);
 
-        $higher_price = 0;
+        $higher_content_points = 0;
 
         foreach ($matches as $match) {
             if (
                 empty($match[0]) ||
                 my_strpos($match[0], '[' . $this->get_tag() . '=') === false ||
-                !($price = (int)str_replace('=', '', $match[3]))
+                !($content_points = (float)str_replace('=', '', $match[3]))
             ) {
                 continue;
             }
 
-            $higher_price = max($higher_price, $price);
+            $higher_content_points = max($higher_content_points, $content_points);
         }
 
-        return $higher_price;
+        return $higher_content_points;
     }
 } // END class Shortcodes

@@ -16,7 +16,7 @@
     "value": 0
   },
   "tax": {
-    "optionscode": "numeric",
+    "optionscode": "text",
     "value": 10
   },
   "exempt": {

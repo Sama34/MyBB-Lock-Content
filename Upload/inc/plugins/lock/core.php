@@ -125,9 +125,178 @@ function shortcodeObject(): Shortcodes
     return $lockedContent;
 }
 
+/**
+ * @throws RandomException
+ * @throws SodiumException
+ */
+function hideMessageContents(array $params, string $message): string
+{
+    global $mybb, $post, $lang, $db;
+
+    loadLanguage();
+
+    // if the tag has no content, do nothing.
+    if (!$message) {
+        return '';
+    }
+
+    // return nothing if the print thread page is viewed
+    if (empty($post['pid'])) {
+        return $lang->lock_title;
+    }
+
+    $post_id = (int)$post['pid'];
+
+    if (empty($post['fid'])) {
+        $post_data = get_post($post_id);
+
+        $forum_id = (int)$post_data['fid'];
+    } else {
+        $forum_id = (int)$post['fid'];
+    }
+
+    if (empty($post['tid'])) {
+        $post_data = $post_data ?? get_post($post_id);
+
+        $thread_id = (int)$post_data['tid'];
+    } else {
+        $thread_id = (int)$post['tid'];
+    }
+
+    if (isset($params[0]) && my_strpos($params[0], '=') === 0) {
+        $params['content_points'] = (float)str_replace('=', '', $params[0]);
+    }
+
+    $paid = false;
+
+    $current_user_id = (int)$mybb->user['uid'];
+
+    // does the user have to pay for the content?
+    if (function_exists('newpoints_format_points') &&
+        (!empty($mybb->settings['lock_purchases_enabled']) || getSetting('default_price') > 0)) {
+        // is the pay to view feature allowed in this forum?
+        $disabled = explode(',', $mybb->settings['lock_disabled_forums']);
+
+        if (!in_array($forum_id, $disabled) || $mybb->settings['lock_disabled_forums'] === -1) {
+            // does the content have a price? can the user set the price?
+            if (!isset($params['content_points'])) {
+                // if not, do we have a default price?
+                if (getSetting('default_price') > 0) {
+                    $params['content_points'] = (float)getSetting('default_price');
+                } else {
+                    $params['content_points'] = null;
+                }
+            } elseif (empty($mybb->settings['lock_allow_user_prices']) && getSetting('default_price') > 0) {
+                $params['content_points'] = (float)getSetting('default_price');
+            }
+
+            // is the cost an actual number?
+            if (is_numeric($params['content_points'])) {
+                // cost must be valid, because numbers aren't evil.
+                $content_points = (float)$params['content_points'];
+
+                // check to see whether the user hasn't already unlocked the content.
+                $allowed = explode(',', $post['unlocked'] ?? '');
+
+                if (in_array($current_user_id, $allowed)) {
+                    $paid = true;
+                }
+            }
+        }
+    }
+
+    static $posted = null;
+
+    if (!isset($content_points) && $posted === null) {
+        // if there's no cost, this must be a "post to view" hide tag
+
+        // check to see whether the user has posted in this thread.
+        $query = $db->simple_select(
+            'posts',
+            '*',
+            "tid = '{$thread_id}' AND uid = '{$current_user_id}'"
+        );//  AND visible='1' ?
+
+        $posted = (bool)$db->num_rows($query);
+    }
+
+    // if no title has been set, set a default title.
+    $title = $params['title'] ?? $lang->lock_title;
+
+    // if the user is not the OP, and has not been exempt from having hidden content
+    if (
+        $current_user_id !== (int)$post['uid'] &&
+        !is_member($mybb->settings['lock_exempt'])
+    ) {
+        // if the user isn't logged in, tell them to login or register.
+        if (!$current_user_id) {
+            $return = $lang->sprintf($lang->lock_nopermission_guest, $mybb->settings['bburl']);
+            // if they are logged in, but the item has a price that they haven't paid yet, tell them how they can pay for it.
+        } elseif (isset($content_points) && !$paid && function_exists('newpoints_format_points')) {
+            // place the info we need, into an array
+            $info = [
+                'post_id' => $post_id,
+                'content_points' => $content_points
+            ];
+
+            // encode the information as json, for safe transit
+            $info = json_encode($info);
+
+            // encrypt the json, and encode it as base64; so it can be submitted in a form.
+
+            $info = base64_encode(safeEncrypt($info, $mybb->post_code));
+
+            static $posts_content_points = [];
+
+            if (!isset($posts_content_points[$post['pid']])) {
+                $posts_content_points[$post['pid']] = $content_points;
+            }
+
+            $posts_content_points[$post['pid']] = max($posts_content_points[$post['pid']], $content_points);
+
+            $points = strip_tags(newpoints_format_points((float)$posts_content_points[$post['pid']]));
+
+            $user_points = $lang->sprintf(
+                $lang->lock_purchase_yougot,
+                strip_tags(newpoints_format_points((float)$mybb->user['newpoints']))
+            );
+
+            $lang_confirm = $lang->sprintf($lang->lock_purchase_confirm, $points);
+            $lock_purchase = $lang->sprintf($lang->lock_purchase, $points);
+
+            // build the return button.
+            $return = eval(getTemplate('form', false));
+            // if the user doesn't need to pay, but hasn't posted
+
+        } elseif (!$paid && !$posted) {
+            // tell them to reply to the thread.
+
+            $return = $lang->lock_nopermission_reply;
+            // all is good.
+        } else {
+            // give them the content.
+            $return = $message;
+        }
+        // bypass the hide tags.
+    } else {
+        // give them the content
+        $return = $message;
+    }
+
+    $cost_desc = '';
+
+    if (isset($content_points) && function_exists('newpoints_format_points') && !isset($points)) {
+        $points = newpoints_format_points($content_points);
+
+        $cost_desc = $lang->sprintf($lang->lock_purchase_cost, $points);
+    }
+
+    return eval(getTemplate('wrapper', false));
+}
+
 // the following functions replace the old encrypt logic with stock php encryption logic
 // https://stackoverflow.com/a/30159120
-// I think there is no need for encryption on this plugin but maybe I'm wrong so it will remain for now
+// todo: I think there is no need for encryption on this plugin but maybe I'm wrong so it will remain for now
 /**
  * Encrypt a message
  *
