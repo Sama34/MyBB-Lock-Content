@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    Lock plugin (/inc/plugins/lock.php)
+ *    Lock Content plugin (/inc/plugins/lock.php)
  *    Author: Neko
  *    Maintainer: © 2024 Omar Gonzalez
  *
@@ -43,7 +43,7 @@ define('LockContent\SETTINGS', [
     //'key' => '',
 ]);
 
-define('LockContent\DEBUG', true);
+define('LockContent\DEBUG', false);
 
 define('LockContent\ROOT', constant('MYBB_ROOT') . 'inc/plugins/lock');
 
@@ -69,14 +69,6 @@ addHooks('LockContent\Hooks\Shared');
 function lock_info(): array
 {
     return pluginInfo();
-}
-
-if (!empty($mybb->input['highlight'])) {
-    $highlight_replacement = null;
-}
-
-if (!class_exists('Shortcodes')) {
-    require __DIR__ . '/lock/shortcodes.class.php';
 }
 
 function lock_activate(): void

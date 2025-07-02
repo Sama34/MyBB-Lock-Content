@@ -2,9 +2,9 @@
 
 /***************************************************************************
  *
- *    Lock plugin (/inc/languages/english/lock.lang.php)
- *    Author: Omar Gonzalez
- *    Copyright: © 2020 Omar Gonzalez
+ *    Lock Content plugin (/inc/languages/english/lock.lang.php)
+ *    Author: Neko
+ *    Maintainer: © 2024 Omar Gonzalez
  *
  *    Website: https://ougc.network
  *
@@ -26,7 +26,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-$l['lock'] = 'Lock';
+$l['lock'] = 'Lock Content';
 $l['lock_desc'] = 'Allow users to hide content in their posts in exchange for replies or NewPoints currency.';
 
 $l['lock_nopermission_reply'] = 'You must reply to this thread to view this content.';
@@ -37,5 +37,6 @@ $l['lock_purchase_yougot'] = ' You have {1} points.';
 $l['lock_purchase_cost'] = '[{1} Points]';
 $l['lock_purchase_confirm'] = 'Are you sure you want to pay {1} to view the content?';
 $l['lock_purchase_desc'] = 'Please pay the required points to unlock the content.';
+$l['lock_purchase_error_no_funds'] = 'You do not have enough points to purchase this content.';
 
 $l['lock_permission_maxcost'] = 'You are not allowed to charge more than {1} for your hidden content.';

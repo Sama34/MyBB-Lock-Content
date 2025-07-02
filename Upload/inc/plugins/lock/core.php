@@ -114,11 +114,60 @@ function getSetting(string $settingKey = '')
     );
 }
 
+function purchaseLogInsert(array $logData): int
+{
+    global $db;
+
+    $insertData = [];
+
+    if (isset($logData['user_id'])) {
+        $insertData['user_id'] = (int)$logData['user_id'];
+    }
+
+    if (isset($logData['post_id'])) {
+        $insertData['post_id'] = (int)$logData['post_id'];
+    }
+
+    if (isset($logData['purchase_stamp'])) {
+        $insertData['purchase_stamp'] = (int)$logData['purchase_stamp'];
+    }
+
+    return (int)$db->insert_query('ougc_lock_content_logs', $insertData);
+}
+
+function purchaseLogGet(array $whereClauses, array $queryFields = [], array $queryOptions = []): array
+{
+    global $db;
+
+    $queryFields[] = 'log_id';
+
+    $query = $db->simple_select(
+        'ougc_lock_content_logs',
+        implode(',', $queryFields),
+        implode(' AND ', $whereClauses),
+        $queryOptions
+    );
+
+    if (isset($queryOptions['limit']) && $queryOptions['limit'] === 1) {
+        return (array)$db->fetch_array($query);
+    }
+
+    $logObjects = [];
+
+    while ($logData = $db->fetch_array($query)) {
+        $logObjects[(int)$logData['log_id']] = $db->fetch_array($query);
+    }
+
+    return $logObjects;
+}
+
 function shortcodeObject(): Shortcodes
 {
     static $lockedContent = null;
 
-    if (!($lockedContent instanceof Shortcodes)) {
+    if (!is_object($lockedContent) || !($lockedContent instanceof Shortcodes)) {
+        require_once ROOT . '/shortcodes.class.php';
+
         $lockedContent = new Shortcodes(tag: getSetting('type'));
     }
 
@@ -195,12 +244,11 @@ function hideMessageContents(array $params, string $message): string
                 // cost must be valid, because numbers aren't evil.
                 $content_points = (float)$params['content_points'];
 
-                // check to see whether the user hasn't already unlocked the content.
-                $allowed = explode(',', $post['unlocked'] ?? '');
-
-                if (in_array($current_user_id, $allowed)) {
-                    $paid = true;
-                }
+                // check to see whether the user has purchased this post's content
+                $paid = (bool)purchaseLogGet(
+                    ["user_id={$current_user_id}", "post_id={$post_id}"],
+                    queryOptions: ['limit' => 1]
+                );
             }
         }
     }

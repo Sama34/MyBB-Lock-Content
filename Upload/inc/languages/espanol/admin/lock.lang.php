@@ -2,9 +2,9 @@
 
 /***************************************************************************
  *
- *    Lock plugin (/inc/languages/espanol/admin/lock.lang.php)
- *    Author: Omar Gonzalez
- *    Copyright: © 2020 Omar Gonzalez
+ *    Lock Content plugin (/inc/languages/espanol/admin/lock.lang.php)
+ *    Author: Neko
+ *    Maintainer: © 2024 Omar Gonzalez
  *
  *    Website: https://ougc.network
  *
@@ -26,15 +26,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-$l['lock'] = 'Lock';
-$l['lock_desc'] = 'Lock es un complemento para ocultar contenido que se muestra cuando el usuario responde al hilo o paga puntos de NewPoints.';
+$l['lock'] = 'Lock Content';
+$l['lock_desc'] = 'Lock Content es un complemento para ocultar contenido que se muestra cuando el usuario responde al hilo o paga puntos de NewPoints.';
 
 $l['lock_pluginlibrary'] = "Este plugin requiere por lo menos la version {2} de <a href=\"{1}\">PluginLibrary</a>. Por favor sube a tu servidor los archivos necesarios para continuar.";
 
-$l['setting_group_lock'] = 'Lock';
-$l['setting_group_lock_desc'] = 'Configuracion para el plugin Lock.';
-$l['setting_lock_key'] = 'Key';
-$l['setting_lock_key_desc'] = 'Una palabra clave para mantener a curiosos de editar contenido que no deberian.';
+$l['setting_group_lock'] = 'Lock Content';
+$l['setting_group_lock_desc'] = 'Configuracion para el plugin Lock Content.';
 $l['setting_lock_purchases_enabled'] = 'Habilitar Compras NewPoints';
 $l['setting_lock_purchases_enabled_desc'] = 'Permite a los usuarios el vender contenido por puntos de NewPoints';
 $l['setting_lock_allow_user_prices'] = 'Permitir Precios Individuales';

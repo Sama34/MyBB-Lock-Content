@@ -94,3 +94,5 @@ function datahandler_post_validate_thread(PostDataHandler &$dataHandler): PostDa
 {
     return datahandler_post_validate_post($dataHandler);
 }
+
+// todo: delete content when users, posts are removed etc

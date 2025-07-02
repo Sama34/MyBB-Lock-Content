@@ -2,9 +2,9 @@
 
 /***************************************************************************
  *
- *    Lock plugin (/inc/languages/english/admin/lock.lang.php)
- *    Author: Omar Gonzalez
- *    Copyright: © 2020 Omar Gonzalez
+ *    Lock Content plugin (/inc/languages/english/admin/lock.lang.php)
+ *    Author: Neko
+ *    Maintainer: © 2024 Omar Gonzalez
  *
  *    Website: https://ougc.network
  *
@@ -26,15 +26,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-$l['lock'] = 'Lock';
+$l['lock'] = 'Lock Content';
 $l['lock_desc'] = 'Allow users to hide content in their posts in exchange for replies or NewPoints currency.';
 
 $l['lock_pluginlibrary'] = "This plugin requires <a href=\"{1}\">PluginLibrary</a> version {2} or later to be uploaded to your forum. Please upload the necessary files before continuing.";
 
-$l['setting_group_lock'] = 'Lock';
-$l['setting_group_lock_desc'] = 'Settings for the hidding content plugin.';
-$l['setting_lock_key'] = 'Key';
-$l['setting_lock_key_desc'] = "A password to keep spooky people from editing values they shouldn't be.";
+$l['setting_group_lock'] = 'Lock Content';
+$l['setting_group_lock_desc'] = 'Settings for the Lock Content plugin.';
 $l['setting_lock_purchases_enabled'] = 'Enable NewPoints Purchases';
 $l['setting_lock_purchases_enabled_desc'] = 'Allow users to sell locked content for newpoints credits.';
 $l['setting_lock_allow_user_prices'] = 'Allow User Prices';

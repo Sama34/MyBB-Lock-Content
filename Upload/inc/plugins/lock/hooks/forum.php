@@ -33,6 +33,8 @@ namespace LockContent\Hooks\Forum;
 use Exception;
 
 use function LockContent\Core\getSetting;
+use function LockContent\Core\purchaseLogGet;
+use function LockContent\Core\purchaseLogInsert;
 use function LockContent\Core\safeDecrypt;
 use function LockContent\Core\shortcodeObject;
 use function NewPoints\Core\log_add;
@@ -98,7 +100,7 @@ function showthread_start(): void
         error($lang->error_invalidpost);
     }
 
-    $query = $db->simple_select('posts', 'tid, uid, message, unlocked', "pid = '{$post_id}'");
+    $query = $db->simple_select('posts', 'tid, uid, message', "pid = '{$post_id}'");
 
     if (!$db->num_rows($query)) {
         error($lang->error_invalidpost);
@@ -122,16 +124,15 @@ function showthread_start(): void
         $content_points = (float)getSetting('default_price');
     }
 
-    // check whether the current user has already unlocked the content
-    $allowed = array_filter(array_map('intval', explode(',', $post_data['unlocked'] ?? '')));
-
     $current_user_id = (int)$mybb->user['uid'];
 
-    if (!in_array($current_user_id, $allowed)) {
-        // user doesn't have it unlocked
+    // check to see whether the user has purchased this post's content
+    if (!purchaseLogGet(["user_id={$current_user_id}", "post_id={$post_id}"], queryOptions: ['limit' => 1])) {
         if ($mybb->user['newpoints'] < $content_points) {
+            \LockContent\Core\loadLanguage();
+
             // user does not have enough funds to pay for the item
-            error('You do not have enough points to purchase this item.');
+            error($lang->lock_purchase_error_no_funds);
         }
 
         // take the points from the user
@@ -180,16 +181,8 @@ function showthread_start(): void
             LOGGING_TYPE_INCOME
         );
 
-        // add the user to the list of people with access to the content
-        $allowed[] = $current_user_id;
-
-        $allowed = implode(',', $allowed);
-
-        $unlocked = [
-            'unlocked' => $allowed,
-        ];
-
-        $db->update_query('posts', $unlocked, "pid='{$post_id}'");
+        // add the purchase log
+        purchaseLogInsert(['user_id' => $current_user_id, 'post_id' => $post_id, 'purchase_stamp' => TIME_NOW]);
     }
 
     $url = $mybb->settings['bburl'] . '/' . get_post_link($post_id) . '#pid' . $post_id;

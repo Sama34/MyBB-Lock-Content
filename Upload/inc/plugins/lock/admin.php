@@ -35,11 +35,39 @@ use stdClass;
 
 use function LockContent\Core\loadLanguage;
 
+use function LockContent\Core\purchaseLogGet;
+use function LockContent\Core\purchaseLogInsert;
+
 use const PLUGINLIBRARY;
 use const LockContent\ROOT;
 use const Newpoints\DECIMAL_DATA_TYPE_SIZE;
 use const Newpoints\DECIMAL_DATA_TYPE_STEP;
 use const Newpoints\Core\FORM_TYPE_NUMERIC_FIELD;
+
+const TABLES_DATA = [
+    'ougc_lock_content_logs' => [
+        'log_id' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'auto_increment' => true,
+            'primary_key' => true
+        ],
+        'user_id' => [
+            'type' => 'INT',
+            'unsigned' => true
+        ],
+        'post_id' => [
+            'type' => 'INT',
+            'unsigned' => true
+        ],
+        'purchase_stamp' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'default' => 0
+        ],
+        'unique_key' => ['user_post_id' => 'user_id,post_id']
+    ],
+];
 
 function pluginInfo(): array
 {
@@ -136,6 +164,8 @@ function pluginActivate(): void
         $plugins['LockContent'] = $pluginInfo['versioncode'];
     }
 
+    dbVerifyTables();
+
     /*~*~* RUN UPDATES START *~*~*/
     global $db;
 
@@ -151,6 +181,32 @@ function pluginActivate(): void
                 );
             }
         }
+
+        if ($db->field_exists('unlocked', 'posts')) {
+            $query = $db->simple_select('posts', 'pid, unlocked', "unlocked IS NOT NULL AND unlocked!=''");
+
+            while ($postData = $db->fetch_array($query)) {
+                $postID = (int)$postData['pid'];
+
+                $allowedUsers = array_filter(array_map('intval', explode(',', $postData['unlocked'] ?? '')));
+
+                foreach ($allowedUsers as $key => $userID) {
+                    $logData = purchaseLogGet(["user_id={$userID}", "post_id={$postID}"], queryOptions: ['limit' => 1]);
+
+                    if (!$logData) {
+                        if (purchaseLogInsert(['user_id' => $userID, 'post_id' => $postID])) {
+                            unset($allowedUsers[$key]);
+
+                            $db->update_query(
+                                'posts',
+                                ['unlocked' => implode(',', $allowedUsers)],
+                                "pid='{$postID}'"
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /*~*~* RUN UPDATES END *~*~*/
@@ -164,11 +220,6 @@ function pluginActivate(): void
     $cache->update('ougc_plugins', $plugins);
 }
 
-function pluginInstall(): void
-{
-    dbVerifyColumns();
-}
-
 function pluginIsInstalled(): bool
 {
     static $isInstalled = null;
@@ -178,10 +229,8 @@ function pluginIsInstalled(): bool
 
         $isInstalledEach = true;
 
-        foreach (dbFields() as $tableName => $tableColumns) {
-            foreach ($tableColumns as $fieldName => $fieldData) {
-                $isInstalledEach = $db->field_exists($fieldName, $tableName) && $isInstalledEach;
-            }
+        foreach (TABLES_DATA as $tableName => $tableColumns) {
+            $isInstalledEach = $db->table_exists($tableName) && $isInstalledEach;
         }
 
         $isInstalled = $isInstalledEach;
@@ -195,6 +244,12 @@ function pluginUninstall(): void
     global $db, $PL, $cache;
 
     loadPluginLibrary();
+
+    foreach (TABLES_DATA as $tableName => $tableData) {
+        if ($db->table_exists($tableName)) {
+            $db->drop_table($tableName);
+        }
+    }
 
     foreach (dbFields() as $tableName => $tableColumns) {
         if ($db->table_exists($tableName)) {
@@ -223,6 +278,99 @@ function pluginUninstall(): void
     } else {
         $cache->delete('ougc_plugins');
     }
+}
+
+function dbTables(): array
+{
+    $tables_data = [];
+
+    foreach (TABLES_DATA as $tableName => $tableColumns) {
+        foreach ($tableColumns as $fieldName => $fieldData) {
+            if (!isset($fieldData['type'])) {
+                continue;
+            }
+
+            $tables_data[$tableName][$fieldName] = dbBuildFieldDefinition($fieldData);
+        }
+
+        foreach ($tableColumns as $fieldName => $fieldData) {
+            if (isset($fieldData['primary_key'])) {
+                $tables_data[$tableName]['primary_key'] = $fieldName;
+            }
+
+            if ($fieldName === 'unique_key') {
+                $tables_data[$tableName]['unique_key'] = $fieldData;
+            }
+        }
+    }
+
+    return $tables_data;
+}
+
+function dbVerifyTables(): bool
+{
+    global $db;
+
+    $collation = $db->build_create_table_collation();
+
+    foreach (dbTables() as $tableName => $tableColumns) {
+        if ($db->table_exists($tableName)) {
+            foreach ($tableColumns as $fieldName => $fieldData) {
+                if ($fieldName == 'primary_key' || $fieldName == 'unique_key') {
+                    continue;
+                }
+
+                if ($db->field_exists($fieldName, $tableName)) {
+                    $db->modify_column($tableName, "`{$fieldName}`", $fieldData);
+                } else {
+                    $db->add_column($tableName, $fieldName, $fieldData);
+                }
+            }
+        } else {
+            $query_string = "CREATE TABLE IF NOT EXISTS `{$db->table_prefix}{$tableName}` (";
+
+            foreach ($tableColumns as $fieldName => $fieldData) {
+                if ($fieldName == 'primary_key') {
+                    $query_string .= "PRIMARY KEY (`{$fieldData}`)";
+                } elseif ($fieldName != 'unique_key') {
+                    $query_string .= "`{$fieldName}` {$fieldData},";
+                }
+            }
+
+            $query_string .= ") ENGINE=MyISAM{$collation};";
+
+            $db->write_query($query_string);
+        }
+    }
+
+    dbVerifyIndexes();
+
+    return true;
+}
+
+function dbVerifyIndexes(): bool
+{
+    global $db;
+
+    foreach (dbTables() as $tableName => $tableColumns) {
+        if (!$db->table_exists($tableName)) {
+            continue;
+        }
+
+        if (isset($tableColumns['unique_key'])) {
+            foreach ($tableColumns['unique_key'] as $key_name => $key_value) {
+                if ($db->index_exists($tableName, $key_name)) {
+                    continue;
+                }
+
+                $db->write_query(
+                    "ALTER TABLE {$db->table_prefix}{$tableName} ADD UNIQUE KEY {$key_name} ({$key_value})"
+                );
+            }
+        }
+    }
+
+    return true;
 }
 
 function dbVerifyColumns(): void

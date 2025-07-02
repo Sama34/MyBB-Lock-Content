@@ -2,9 +2,9 @@
 
 /***************************************************************************
  *
- *    Lock plugin (/inc/plugins/lock/shortcodes.class.php)
+ *    Lock Content plugin (/inc/plugins/lock/shortcodes.class.php)
  *    Author: Neko
- *    Maintainer: Omar Gonzalez
+ *    Maintainer: © 2024 Omar Gonzalez
  *
  *    Website: https://ougc.network
  *
@@ -29,6 +29,8 @@
 declare(strict_types=1);
 
 // stop direct access to the file.
+use Random\RandomException;
+
 if (!defined('IN_MYBB')) {
     die('no');
 }
@@ -45,12 +47,15 @@ class Shortcodes
 
     public static bool $strict = true;
 
+    /**
+     * @throws RandomException
+     */
     public function __construct(
         public readonly string $tag = 'hide',
         private string $highlight_replacement = '',
         private readonly string $default_callback = 'LockContent\Core\hideMessageContents',
     ) {
-        if ($highlight_replacement === '') {
+        if ($this->highlight_replacement === '') {
             $this->refresh_highlight_replacement();
         }
 
@@ -62,13 +67,12 @@ class Shortcodes
         return $this->tag;
     }
 
+    /**
+     * @throws RandomException
+     */
     public function refresh_highlight_replacement(): void
     {
-        $this->highlight_replacement = substr(
-            str_shuffle(str_repeat('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWYXZ', 20)),
-            0,
-            20
-        );
+        $this->highlight_replacement = bin2hex(random_bytes(10));
     }
 
     public function get_highlight_replacement(): string
@@ -134,7 +138,7 @@ class Shortcodes
 
         $pattern = self::shortcode_regex();
 
-        return preg_replace_callback("/$pattern/s", \Shortcodes::run_shortcode(...), $message);
+        return preg_replace_callback("/$pattern/s", Shortcodes::run_shortcode(...), $message);
     }
 
     private function run_shortcode(array $m): string
