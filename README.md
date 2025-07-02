@@ -71,16 +71,12 @@ A setup that meets the following requirements is necessary to use this plugin.
    │ │ │ ├── lock.lang.php
    │ ├── plugins
    │ │ ├── lock
-   │ │ │ ├── cipher
-   │ │ │ │ ├── blowfish.php
    │ │ │ ├── core
-   │ │ │ │ ├── purchase.php
    │ │ │ │ ├── shortcode.php
    │ │ │ ├── hooks
    │ │ │ │ ├── admin.php
    │ │ │ ├── admin.php
    │ │ │ ├── core.php
-   │ │ │ ├── pcrypt.php
    │ │ │ ├── shortcodes.class.php
    │ │ ├── lock.php
    ```

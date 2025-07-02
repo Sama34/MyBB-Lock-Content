@@ -38,6 +38,13 @@ use const LockContent\ROOT;
 
 defined('IN_MYBB') || die('This file cannot be accessed directly.');
 
+// You can uncomment the lines below to avoid storing some settings in the DB
+define('LockContent\SETTINGS', [
+    //'key' => '',
+]);
+
+define('LockContent\DEBUG', true);
+
 define('LockContent\ROOT', constant('MYBB_ROOT') . 'inc/plugins/lock');
 
 require_once ROOT . '/core.php';
@@ -50,22 +57,10 @@ if (defined('IN_ADMINCP')) {
 
     addHooks('LockContent\Hooks\Admin');
 } else {
-    //require_once ROOT . '/hooks/forum.php';
+    require_once ROOT . '/hooks/forum.php';
 
     addHooks('LockContent\Hooks\Forum');
 }
-
-if (THIS_SCRIPT === 'showthread.php') {
-    global $templatelist;
-
-    if (!isset($templatelist)) {
-        $templatelist = '';
-    }
-
-    $templatelist .= ',lock_wrapper,lock_form,';
-}
-
-defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/pluginlibrary.php');
 
 function lock_info(): array
 {
@@ -75,16 +70,6 @@ function lock_info(): array
 global $plugins;
 
 if (!defined('IN_ADMINCP')) {
-    // keep people from using the highlight feature to bypass the tags
-    $plugins->add_hook('parse_message_start', 'lock_highlight_start');
-    $plugins->add_hook('parse_message', 'lock_highlight_end');
-
-    // adds a new action method to MyBB.
-    $plugins->add_hook('global_end', 'lock_purchase');
-
-    // remove hide tags from quotes
-    $plugins->add_hook('parse_quoted_message', 'lock_quoted');
-
     // validate maximum cost
     $plugins->add_hook('datahandler_post_validate_post', ['Shortcodes', 'validate_post']);
     $plugins->add_hook('datahandler_post_validate_thread', ['Shortcodes', 'validate_post']);
@@ -113,73 +98,4 @@ function lock_is_installed(): bool
     return pluginIsInstalled();
 }
 
-function lock_highlight_start(string &$message): string
-{
-    global $mybb, $replacement;
-
-    if (!empty($mybb->input['highlight'])) {
-        $replacement = substr(
-            str_shuffle(str_repeat('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWYXZ', 20)),
-            0,
-            20
-        );
-
-        switch ((string)$mybb->settings['lock_type']) {
-            case 'lock':
-                $message = str_replace('lock', $replacement, $message);
-                break;
-            case 'cap':
-                $message = str_replace('cap', $replacement, $message);
-                break;
-            default:
-                $message = str_replace('hide', $replacement, $message);
-                break;
-        }
-    }
-
-    return $message;
-}
-
-function lock_highlight_end(string &$message): string
-{
-    global $mybb, $replacement;
-
-    if (!empty($mybb->input['highlight'])) {
-        switch ((string)$mybb->settings['lock_type']) {
-            case 'lock':
-                $message = str_replace($replacement, 'lock', $message);
-                break;
-            case 'cap':
-                $message = str_replace($replacement, 'cap', $message);
-                break;
-            default:
-                $message = str_replace($replacement, 'hide', $message);
-                break;
-        }
-    }
-
-    return Shortcodes::parse($message);
-}
-
-function lock_purchase(): bool
-{
-    global $_POST, $mybb, $db;
-
-    require_once __DIR__ . '/lock/core/purchase.php';
-
-    return true;
-}
-
 require_once __DIR__ . '/lock/core/shortcode.php';
-
-function lock_quoted(array &$quoted_post): array
-{
-    Shortcodes::set_tag();
-    $quoted_post['message'] = preg_replace(
-        '#\[' . Shortcodes::$tag . '(.*)\[/' . Shortcodes::$tag . '\]#is',
-        '',
-        $quoted_post['message']
-    );
-
-    return $quoted_post;
-}

@@ -28,14 +28,25 @@
 
 declare(strict_types=1);
 
-function lock_hide(array $params, string $content): string
+use Random\RandomException;
+
+use function LockContent\Core\getSetting;
+use function LockContent\Core\getTemplate;
+use function LockContent\Core\safeEncrypt;
+use function LockContent\Core\shortcodeObject;
+
+/**
+ * @throws RandomException
+ * @throws SodiumException
+ */
+function lock_hide(array $params, string $message): string
 {
-    global $mybb, $post, $templates, $lang, $db;
+    global $mybb, $post, $lang, $db;
 
     isset($lang->lock) || $lang->load('lock');
 
     // if the tag has no content, do nothing.
-    if (!$content) {
+    if (!$message) {
         return '';
     }
 
@@ -52,26 +63,26 @@ function lock_hide(array $params, string $content): string
 
     // does the user have to pay for the content?
     if (function_exists('newpoints_format_points') &&
-        (!empty($mybb->settings['lock_purchases_enabled']) || (int)$mybb->settings['lock_default_price'] > 0)) {
+        (!empty($mybb->settings['lock_purchases_enabled']) || getSetting('default_price') > 0)) {
         // is the pay to view feature allowed in this forum?
         $disabled = explode(',', $mybb->settings['lock_disabled_forums']);
         if (!in_array($post['fid'], $disabled) || $mybb->settings['lock_disabled_forums'] === -1) {
             // does the content have a price? can the user set the price?
             if (!isset($params['cost'])) {
                 // if not, do we have a default price?
-                if ($mybb->settings['lock_default_price'] > 0) {
-                    $params['cost'] = $mybb->settings['lock_default_price'];
+                if (getSetting('default_price') > 0) {
+                    $params['cost'] = (float)getSetting('default_price');
                 } else {
                     $params['cost'] = null;
                 }
-            } elseif (empty($mybb->settings['lock_allow_user_prices']) && $mybb->settings['lock_default_price'] > 0) {
-                $params['cost'] = $mybb->settings['lock_default_price'];
+            } elseif (empty($mybb->settings['lock_allow_user_prices']) && getSetting('default_price') > 0) {
+                $params['cost'] = (float)getSetting('default_price');
             }
 
             // is the cost an actual number?
             if (is_numeric($params['cost'])) {
                 // cost must be valid, because numbers aren't evil.
-                $cost = $params['cost'];
+                $cost = (float)$params['cost'];
 
                 // check to see whether the user hasn't already unlocked the content.
                 $allowed = explode(',', $post['unlocked'] ?? '');
@@ -99,9 +110,7 @@ function lock_hide(array $params, string $content): string
     }
 
     // if no title has been set, set a default title.
-    if (!isset($params['title'])) {
-        $params['title'] = $lang->lock_title;
-    }
+    $title = $params['title'] ?? $lang->lock_title;
 
     // if the user is not the OP, and has not been exempt from having hidden content
     if (
@@ -113,18 +122,9 @@ function lock_hide(array $params, string $content): string
             $return = $lang->sprintf($lang->lock_nopermission_guest, $mybb->settings['bburl']);
             // if they are logged in, but the item has a price that they haven't paid yet, tell them how they can pay for it.
         } elseif (isset($cost) && !$paid && function_exists('newpoints_format_points')) {
-            // include the pcrypt class, so we can encrypt our data; to keep it safe from spookys.
-            require_once __DIR__ . '/../pcrypt.php';
-
-            $key = $mybb->settings['lock_key'];
-
-            $pcrypt = new pcrypt();
-
-            $pcrypt = $pcrypt->pcrypt(MODE_ECB, 'BLOWFISH', $key);
-
             // place the info we need, into an array
             $info = [
-                'pid' => $post['pid'],
+                'pid' => (int)$post['pid'],
                 'cost' => $cost
             ];
 
@@ -132,15 +132,16 @@ function lock_hide(array $params, string $content): string
             $info = json_encode($info);
 
             // encrypt the json, and encode it as base64; so it can be submitted in a form.
-            $info = base64_encode($pcrypt->encrypt($info));
+
+            $info = base64_encode(safeEncrypt($info, $mybb->post_code));
 
             static $posts_prices = [];
 
             if (!isset($posts_prices[$post['pid']])) {
-                $posts_prices[$post['pid']] = (int)$cost;
+                $posts_prices[$post['pid']] = $cost;
             }
 
-            $posts_prices[$post['pid']] = max($posts_prices[$post['pid']], (int)$cost);
+            $posts_prices[$post['pid']] = max($posts_prices[$post['pid']], $cost);
 
             $points = strip_tags(newpoints_format_points((float)$posts_prices[$post['pid']]));
 
@@ -153,7 +154,7 @@ function lock_hide(array $params, string $content): string
             $lock_purchase = $lang->sprintf($lang->lock_purchase, $points);
 
             // build the return button.
-            $return = eval($templates->render('lock_form', true, false));
+            $return = eval(getTemplate('form', false));
             // if the user doesn't need to pay, but hasn't posted
 
         } elseif (!$paid && !$posted) {
@@ -163,39 +164,21 @@ function lock_hide(array $params, string $content): string
             // all is good.
         } else {
             // give them the content.
-            $return = $content;
+            $return = $message;
         }
         // bypass the hide tags.
     } else {
         // give them the content
-        $return = $content;
+        $return = $message;
     }
 
     $cost_desc = '';
 
     if (isset($cost) && function_exists('newpoints_format_points') && !isset($points)) {
-        $points = newpoints_format_points((float)$cost);
+        $points = newpoints_format_points($cost);
 
         $cost_desc = $lang->sprintf($lang->lock_purchase_cost, $points);
     }
 
-    return eval($templates->render('lock_wrapper', true, false));
-}
-
-// add the hide tag if the shortcodes plugin has been installed.
-
-global $mybb;
-
-if (isset($mybb->settings['lock_type'])) {
-    switch ($mybb->settings['lock_type']) {
-        case 'lock':
-            Shortcodes::add('lock', 'lock_hide');
-            break;
-        case 'cap':
-            Shortcodes::add('cap', 'lock_hide');
-            break;
-        default:
-            Shortcodes::add('hide', 'lock_hide');
-            break;
-    }
+    return eval(getTemplate('wrapper', false));
 }

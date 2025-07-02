@@ -136,11 +136,28 @@ function pluginActivate(): void
         $plugins['LockContent'] = $pluginInfo['versioncode'];
     }
 
-    dbVerifyColumns();
-
     /*~*~* RUN UPDATES START *~*~*/
+    global $db;
+
+    if ($pluginInfo['versioncode'] <= 1837) {
+        if ($db->field_exists('lock_maxcost', 'usergroups')) {
+            $query = $db->simple_select('usergroups', 'gid, lock_maxcost');
+
+            while ($groupData = $db->fetch_array($query)) {
+                $db->update_query(
+                    'usergroups',
+                    ['lock_maxcost' => (float)$groupData['lock_maxcost']],
+                    "gid='{$groupData['gid']}'"
+                );
+            }
+        }
+    }
 
     /*~*~* RUN UPDATES END *~*~*/
+
+    dbVerifyColumns();
+
+    $cache->update_usergroups();
 
     $plugins['LockContent'] = $pluginInfo['versioncode'];
 
@@ -188,6 +205,8 @@ function pluginUninstall(): void
             }
         }
     }
+
+    $cache->update_usergroups();
 
     $PL->settings_delete('lock');
 

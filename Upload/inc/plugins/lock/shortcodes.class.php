@@ -41,43 +41,50 @@ if (!defined('IN_MYBB')) {
  **/
 class Shortcodes
 {
-
-    private static array $shortcodes = [];
     public static bool $strict = true;
-    public static string $tag;
 
-    public function __construct()
-    {
-    }
-
-    public static function set_tag(): void
-    {
-        global $mybb;
-
-        switch ((string)$mybb->settings['lock_type']) {
-            case 'lock':
-                self::$tag = 'lock';
-                break;
-            case 'cap':
-                self::$tag = 'cap';
-                break;
-            default:
-                self::$tag = 'hide';
-                break;
+    public function __construct(
+        public string $tag = 'hide',
+        private string $highlight_replacement = '',
+        private array $shortcodes = [],
+    ) {
+        if ($highlight_replacement === '') {
+            $this->refresh_highlight_replacement();
         }
+
+        $this->add($this->get_tag(), 'lock_hide');
     }
 
-    public static function add(string $shortcode, string $function): void
+    public function get_tag(): string
+    {
+        return $this->tag;
+    }
+
+    public function refresh_highlight_replacement(): void
+    {
+        $this->highlight_replacement = substr(
+            str_shuffle(str_repeat('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWYXZ', 20)),
+            0,
+            20
+        );
+    }
+
+    public function get_highlight_replacement(): string
+    {
+        return $this->highlight_replacement;
+    }
+
+    private function add(string $shortcode, string $function): void
     {
         if (is_callable($function)) {
-            self::$shortcodes[$shortcode] = $function;
+            $this->shortcodes[$shortcode] = $function;
         }
     }
 
     //everything below this line was pretty much pulled from wordpress, no need to reinvent the wheel.
-    private static function shortcode_regex(): string
+    private function shortcode_regex(): string
     {
-        $tagnames = array_keys(self::$shortcodes);
+        $tagnames = array_keys($this->shortcodes);
         $tagregexp = join('|', array_map('preg_quote', $tagnames));
 
         // WARNING! Do not change this regex without changing do_shortcode_tag() and strip_shortcode_tag()
@@ -113,37 +120,37 @@ class Shortcodes
             . '(\\]?)';                          // 6: Optional second closing brocket for escaping shortcodes: [[tag]]
     }
 
-    public static function parse(string $content): string
+    public function parse(string $message): string
     {
-        if (false === strpos($content, '[')) {
-            return $content;
+        if (!str_contains($message, '[')) {
+            return $message;
         }
 
-        if (empty(self::$shortcodes)) {
-            return $content;
+        if (empty($this->shortcodes)) {
+            return $message;
         }
 
         $pattern = self::shortcode_regex();
 
-        return preg_replace_callback("/$pattern/s", Closure::fromCallable([self::class, 'run_shortcode']), $content);
+        return preg_replace_callback("/$pattern/s", Closure::fromCallable([self::class, 'run_shortcode']), $message);
     }
 
-    private static function run_shortcode(array $m): string
+    private function run_shortcode(array $m): string
     {
         // allow [[foo]] syntax for escaping a tag
         if ($m[1] === '[' && $m[6] === ']') {
             return substr($m[0], 1, -1);
         }
 
-        $tag = $m[2];
+        $foundTag = $m[2];
         $attr = self::fetch_attributes($m[3]);
 
         if (isset($m[5])) {
             // enclosing tag - extra parameter
-            return $m[1] . call_user_func(self::$shortcodes[$tag], $attr, $m[5], $tag) . $m[6];
+            return $m[1] . call_user_func($this->shortcodes[$foundTag], $attr, $m[5], $foundTag) . $m[6];
         } else {
             // self-closing tag
-            return $m[1] . call_user_func(self::$shortcodes[$tag], $attr, null, $tag) . $m[6];
+            return $m[1] . call_user_func($this->shortcodes[$foundTag], $attr, null, $foundTag) . $m[6];
         }
     }
 
@@ -173,7 +180,7 @@ class Shortcodes
         return $atts;
     }
 
-    public static function validate_post(PostDataHandler &$ph): PostDataHandler
+    public function validate_post(PostDataHandler &$ph): PostDataHandler
     {
         global $mybb, $lang;
 
@@ -187,20 +194,18 @@ class Shortcodes
             return $ph;
         }
 
-        self::set_tag();
-
         $message = $ph->data['message'];
 
         if (
-            empty(self::$shortcodes) ||
-            my_strpos($message, '[' . self::$tag) === false
+            empty($this->shortcodes) ||
+            my_strpos($message, '[' . $this->get_tag()) === false
         ) {
             return $ph;
         }
 
         $price = 0;
 
-        Shortcodes::get_higher_price_from_message($message, $price);
+        shortcodeObject()->get_higher_price_from_message($message, $price);
 
         if (!empty($mybb->usergroup['lock_maxcost']) && $price > (int)$mybb->usergroup['lock_maxcost'] && function_exists(
                 'newpoints_format_points'
@@ -215,10 +220,8 @@ class Shortcodes
         return $ph;
     }
 
-    public static function get_higher_price_from_message(string $message, int &$higher_price): int
+    public function get_higher_price_from_message(string $message, int &$higher_price): int
     {
-        self::set_tag();
-
         $pattern = self::shortcode_regex();
 
         preg_match_all("/$pattern/s", $message, $matches, PREG_SET_ORDER);
@@ -228,7 +231,7 @@ class Shortcodes
         foreach ($matches as $match) {
             if (
                 empty($match[0]) ||
-                my_strpos($match[0], '[' . self::$tag . '=') === false ||
+                my_strpos($match[0], '[' . $this->get_tag() . '=') === false ||
                 !($price = (int)str_replace('=', '', $match[3]))
             ) {
                 continue;

@@ -35,7 +35,7 @@ use MyBB;
 use function LockContent\Admin\dbFields;
 use function LockContent\Core\loadLanguage;
 
-function admin_config_plugins_deactivate()
+function admin_config_plugins_deactivate(): void
 {
     global $mybb, $page;
 
