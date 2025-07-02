@@ -39,4 +39,8 @@ $l['lock_purchase_confirm'] = 'Estas seguro de querer pagar {1} para ver el cont
 $l['lock_purchase_desc'] = 'Para ver el contenido oculto necesitas pagar los puntos necesarios.';
 $l['lock_purchase_error_no_funds'] = 'No tienes suficientes puntos para comprar este contenido.';
 
+$l['lock_content_newpoints_page_logs_purchase'] = 'Lock Content Compra';
+$l['lock_content_newpoints_page_logs_sell'] = 'Lock Content Venta';
+$l['lock_content_newpoints_page_logs_post_link'] = '<a href="{1}/{2}">{3}</a>';
+
 $l['lock_permission_maxcost'] = 'No tienes permiso para ocultar contenido por mas de {1} puntos.';

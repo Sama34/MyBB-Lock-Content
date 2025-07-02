@@ -37,9 +37,12 @@ use function LockContent\Core\purchaseLogGet;
 use function LockContent\Core\purchaseLogInsert;
 use function LockContent\Core\safeDecrypt;
 use function LockContent\Core\shortcodeObject;
+use function Newpoints\Core\language_load;
 use function NewPoints\Core\log_add;
 use function NewPoints\Core\points_add_simple;
 use function NewPoints\Core\points_subtract;
+
+use function Newpoints\Core\post_parser;
 
 use const NewPoints\Core\LOGGING_TYPE_CHARGE;
 use const NewPoints\Core\LOGGING_TYPE_INCOME;
@@ -140,13 +143,13 @@ function showthread_start(): void
         points_subtract($current_user_id, $content_points);
 
         log_add(
-            'lock_purchase',
+            'lock_content_purchase',
             '',
             $mybb->user['username'] ?? '',
             $current_user_id,
             $content_points,
             $post_id,
-            0,
+            $post_user_id,
             0,
             LOGGING_TYPE_CHARGE
         );
@@ -170,13 +173,13 @@ function showthread_start(): void
         points_add_simple($post_user_id, $content_points);
 
         log_add(
-            'lock_purchase',
+            'lock_content_sell',
             '',
             get_user($post_user_id)['username'] ?? '',
             $post_user_id,
             $content_points,
             $post_id,
-            0,
+            $current_user_id,
             0,
             LOGGING_TYPE_INCOME
         );
@@ -240,4 +243,95 @@ function parse_quoted_message(array &$quoted_post): array
     );
 
     return $quoted_post;
+}
+
+function newpoints_logs_log_row(): bool
+{
+    global $log_data;
+
+    if (!in_array($log_data['action'], [
+        'lock_content_purchase',
+        'lock_content_sell',
+    ])) {
+        return false;
+    }
+
+    global $lang;
+    global $log_action, $log_primary, $log_secondary, $log_tertiary;
+
+    \LockContent\Core\loadLanguage();
+
+    if ($log_data['action'] === 'lock_content_purchase') {
+        $log_action = $lang->lock_content_newpoints_page_logs_purchase;
+    }
+
+    if ($log_data['action'] === 'lock_content_sell') {
+        $log_action = $lang->lock_content_newpoints_page_logs_sell;
+    }
+
+    $post_id = (int)$log_data['log_primary_id'];
+
+    $post_data = get_post($post_id);
+
+    if (!empty($post_data['tid'])) {
+        $thread_id = (int)$post_data['tid'];
+
+        $thread_data = get_thread($thread_id);
+    }
+
+    if (!(empty($post_data) || empty($post_data['visible']) || empty($thread_data) || empty($thread_data['visible']))) {
+        global $mybb;
+
+        $current_user_id = (int)$mybb->user['uid'];
+
+        $forum_permissions = forum_permissions($thread_data['fid']);
+
+        if (!(empty($forum_permissions['canview']) ||
+            empty($forum_permissions['canviewthreads']) ||
+            (!empty($forum_permissions['canonlyviewownthreads']) && (int)$thread_data['uid'] !== $current_user_id))) {
+            $log_primary = $lang->sprintf(
+                $lang->lock_content_newpoints_page_logs_post_link,
+                $mybb->settings['bburl'],
+                get_post_link($post_id) . '#pid' . $post_id,
+                post_parser()->parse_badwords($post_data['subject'] ?? $thread_data['subject'])
+            );
+        }
+    }
+
+    $purchaser_seller_user_id = (int)$log_data['log_secondary_id'];
+
+    $user_data = get_user($purchaser_seller_user_id);
+
+    if (!empty($user_data['uid'])) {
+        $log_secondary = build_profile_link(
+            format_name(
+                htmlspecialchars_uni($user_data['username']),
+                $user_data['usergroup'],
+                $user_data['displaygroup'],
+            ),
+            $user_data['uid']
+        );
+    }
+
+    return true;
+}
+
+function newpoints_logs_end(): bool
+{
+    global $lang;
+    global $action_types;
+
+    \LockContent\Core\loadLanguage();
+
+    foreach ($action_types as $key => &$action_type) {
+        if ($key === 'lock_content_purchase') {
+            $action_type = $lang->lock_content_newpoints_page_logs_purchase;
+        }
+
+        if ($key === 'lock_content_sell') {
+            $action_type = $lang->lock_content_newpoints_page_logs_sell;
+        }
+    }
+
+    return true;
 }

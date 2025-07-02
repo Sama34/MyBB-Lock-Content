@@ -35,8 +35,6 @@ use PostDataHandler;
 use function LockContent\Core\loadLanguage;
 use function LockContent\Core\shortcodeObject;
 
-use function Newpoints\Core\users_get_group_permissions;
-
 // validate maximum points
 function datahandler_post_validate_post(PostDataHandler &$dataHandler): PostDataHandler
 {
@@ -46,7 +44,7 @@ function datahandler_post_validate_post(PostDataHandler &$dataHandler): PostData
 
     $post_user_id = (int)$post_data['uid'];
 
-    $user_permissions = users_get_group_permissions($post_user_id);
+    $user_permissions = user_permissions($post_user_id);
 
     $maximum_content_points = (float)$user_permissions['lock_maxcost'];
 

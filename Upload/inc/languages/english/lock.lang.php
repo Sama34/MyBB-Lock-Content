@@ -39,4 +39,8 @@ $l['lock_purchase_confirm'] = 'Are you sure you want to pay {1} to view the cont
 $l['lock_purchase_desc'] = 'Please pay the required points to unlock the content.';
 $l['lock_purchase_error_no_funds'] = 'You do not have enough points to purchase this content.';
 
+$l['lock_content_newpoints_page_logs_purchase'] = 'Lock Content Purchase';
+$l['lock_content_newpoints_page_logs_sell'] = 'Lock Content Sell';
+$l['lock_content_newpoints_page_logs_post_link'] = '<a href="{1}/{2}">{3}</a>';
+
 $l['lock_permission_maxcost'] = 'You are not allowed to charge more than {1} for your hidden content.';
