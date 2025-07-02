@@ -29,11 +29,12 @@
 declare(strict_types=1);
 
 use function LockContent\Core\addHooks;
+use function LockContent\Admin\pluginActivate;
+use function LockContent\Admin\pluginInfo;
+use function LockContent\Admin\pluginIsInstalled;
+use function LockContent\Admin\pluginUninstall;
 
 use const LockContent\ROOT;
-use const Newpoints\Core\FORM_TYPE_NUMERIC_FIELD;
-use const Newpoints\DECIMAL_DATA_TYPE_SIZE;
-use const Newpoints\DECIMAL_DATA_TYPE_STEP;
 
 defined('IN_MYBB') || die('This file cannot be accessed directly.');
 
@@ -44,7 +45,7 @@ require_once ROOT . '/core.php';
 defined('PLUGINLIBRARY') || define('PLUGINLIBRARY', constant('MYBB_ROOT') . 'inc/plugins/pluginlibrary.php');
 
 if (defined('IN_ADMINCP')) {
-    //require_once ROOT . '/admin.php';
+    require_once ROOT . '/admin.php';
     require_once ROOT . '/hooks/admin.php';
 
     addHooks('LockContent\Hooks\Admin');
@@ -68,31 +69,7 @@ defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/plu
 
 function lock_info(): array
 {
-    global $mybb, $lang;
-
-    isset($lang->lock) || $lang->load('lock');
-
-    $lock_desc = '';
-
-    if ($mybb->get_input('module') === 'config-plugins') {
-        $lock_desc = ' This work is forked off the <a href="https://github.com/neko">Lock</a> plugin by <a href="https://community.mybb.com/user-99749.html">Nekomimi</a>.';
-    }
-
-    return [
-        'name' => 'Lock',
-        'description' => $lang->lock_desc . $lock_desc,
-        'website' => 'https://ougc.network',
-        'author' => 'Omar G.',
-        'authorsite' => 'https://ougc.network',
-        'version' => '1.8.37',
-        'versioncode' => 1837,
-        'compatibility' => '18*',
-        'codename' => 'ougc_lock',
-        'pl' => [
-            'version' => 13,
-            'url' => 'https://community.mybb.com/mods.php?action=view&pid=573'
-        ]
-    ];
+    return pluginInfo();
 }
 
 global $plugins;
@@ -121,50 +98,19 @@ if (!class_exists('Shortcodes')) {
     require __DIR__ . '/lock/shortcodes.class.php';
 }
 
-function lock_activate(): bool
+function lock_activate(): void
 {
-    global $db, $PL, $lang;
-    lock_deactivate();
-
-    require_once __DIR__ . '/lock/core/install.php';
-
-    return true;
+    pluginActivate();
 }
 
-function lock_deactivate(): bool
+function lock_uninstall(): void
 {
-    global $PL, $lang;
-
-    isset($lang->lock) || $lang->load('lock');
-
-    $info = lock_info();
-
-    if ($file_exists = file_exists(PLUGINLIBRARY)) {
-        $PL or require_once PLUGINLIBRARY;
-    }
-
-    if (!$file_exists || $PL->version < $info['pl']['version']) {
-        flash_message($lang->sprintf($lang->lock_pluginlibrary, $info['pl']['url'], $info['pl']['version']), 'error');
-        admin_redirect('index.php?module=config-plugins');
-    }
-
-    return true;
-}
-
-function lock_uninstall(): bool
-{
-    global $db, $PL;
-
-    require_once __DIR__ . '/lock/core/uninstall.php';
-
-    return true;
+    pluginUninstall();
 }
 
 function lock_is_installed(): bool
 {
-    global $db;
-
-    return (bool)$db->field_exists('unlocked', 'posts');
+    return pluginIsInstalled();
 }
 
 function lock_highlight_start(string &$message): string
@@ -236,36 +182,4 @@ function lock_quoted(array &$quoted_post): array
     );
 
     return $quoted_post;
-}
-
-function lock_get_db_fields(): array
-{
-    if (defined('\Newpoints\DECIMAL_DATA_TYPE_SIZE')) {
-        return [
-            'usergroups' => [
-                'lock_maxcost' => [
-                    'type' => 'DECIMAL',
-                    'unsigned' => true,
-                    'size' => DECIMAL_DATA_TYPE_SIZE,
-                    'default' => 0,
-                    'form_type' => FORM_TYPE_NUMERIC_FIELD,
-                    'form_options' => [
-                        //'min' => 0,
-                        'step' => DECIMAL_DATA_TYPE_STEP,
-                    ],
-                ],
-            ],
-        ];
-    } else {
-        return [
-            'usergroups' => [
-                'lock_maxcost' => [
-                    'type' => 'DECIMAL',
-                    'unsigned' => true,
-                    'size' => '16,4',
-                    'default' => 0,
-                ],
-            ],
-        ];
-    }
 }

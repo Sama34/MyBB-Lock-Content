@@ -32,6 +32,7 @@ namespace LockContent\Hooks\Admin;
 
 use MyBB;
 
+use function LockContent\Admin\dbFields;
 use function LockContent\Core\loadLanguage;
 
 function admin_config_plugins_deactivate()
@@ -63,7 +64,7 @@ function newpoints_admin_user_groups_edit_graph_start(array &$hook_arguments): a
 
     $hook_arguments['data_fields'] = array_merge(
         $hook_arguments['data_fields'],
-        lock_get_db_fields()['usergroups'],
+        dbFields()['usergroups'],
     );
 
     return $hook_arguments;

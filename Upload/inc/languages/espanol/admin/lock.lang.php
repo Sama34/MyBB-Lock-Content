@@ -51,3 +51,5 @@ $l['setting_lock_type'] = "Usar '[hide]' en lugar de '[lock'].";
 $l['setting_lock_type_desc'] = 'Puedes utilizar cualquiera de las palabras clave.';
 
 $l['lock_maxcost'] = 'Lock Content Limite de Puntos<br /><small class="input">El limite de puntos que los usuarios pueden cobrar para mostrar el contenido oculto. Dejar en 0 para no tener limite.<br />';
+
+$l['lockPluginLibrary'] = 'This plugin requires <a href="{1}">PluginLibrary</a> version {2} or later to be uploaded to your forum.';

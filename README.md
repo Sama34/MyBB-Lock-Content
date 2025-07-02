@@ -74,10 +74,12 @@ A setup that meets the following requirements is necessary to use this plugin.
    │ │ │ ├── cipher
    │ │ │ │ ├── blowfish.php
    │ │ │ ├── core
-   │ │ │ │ ├── install.php
    │ │ │ │ ├── purchase.php
    │ │ │ │ ├── shortcode.php
-   │ │ │ │ ├── uninstall.php
+   │ │ │ ├── hooks
+   │ │ │ │ ├── admin.php
+   │ │ │ ├── admin.php
+   │ │ │ ├── core.php
    │ │ │ ├── pcrypt.php
    │ │ │ ├── shortcodes.class.php
    │ │ ├── lock.php

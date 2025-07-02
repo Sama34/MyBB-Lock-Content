@@ -1,0 +1,39 @@
+{
+  "key": {
+    "optionscode": "text",
+    "value": "ixeURXUSoWHjhjqBsXJc"
+  },
+  "purchases_enabled": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "allow_user_prices": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "default_price": {
+    "optionscode": "numeric",
+    "value": 0
+  },
+  "tax": {
+    "optionscode": "numeric",
+    "value": 10
+  },
+  "exempt": {
+    "optionscode": "groupselect",
+    "value": "3,4"
+  },
+  "disabled_forums": {
+    "optionscode": "forumselect",
+    "value": ""
+  },
+  "type": {
+    "optionscode": "radio",
+    "value": "hide",
+    "options": [
+      "hide",
+      "lock",
+      "cap"
+    ]
+  }
+}

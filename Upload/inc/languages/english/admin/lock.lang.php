@@ -49,5 +49,10 @@ $l['setting_lock_disabled_forums'] = 'Disabled Forums.';
 $l['setting_lock_disabled_forums_desc'] = "Select the forums that you do not want the \"pay to view\" functionality to work in.";
 $l['setting_lock_type'] = 'Tag Code';
 $l['setting_lock_type_desc'] = "You can either use a the wording '[hide]' or '[lock]'.";
+$l['setting_lock_type_hide'] = 'Hide';
+$l['setting_lock_type_lock'] = 'Lock';
+$l['setting_lock_type_cap'] = 'Cap';
 
 $l['lock_maxcost'] = 'Lock Content Maximum Points<br /><small class="input">The maximum points users can charge to display hidden content. Leave zero for no limit.<br />';
+
+$l['lockPluginLibrary'] = 'This plugin requires <a href="{1}">PluginLibrary</a> version {2} or later to be uploaded to your forum.';
