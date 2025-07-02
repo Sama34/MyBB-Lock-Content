@@ -31,10 +31,10 @@ declare(strict_types=1);
 namespace LockContent\Core;
 
 use Exception;
-use Random\RandomException;
 use RangeException;
 use Shortcodes;
 use SodiumException;
+use Random\RandomException;
 
 use const LockContent\DEBUG;
 use const LockContent\ROOT;
@@ -168,7 +168,7 @@ function shortcodeObject(): Shortcodes
     if (!is_object($lockedContent) || !($lockedContent instanceof Shortcodes)) {
         require_once ROOT . '/shortcodes.class.php';
 
-        $lockedContent = new Shortcodes(tag: getSetting('type'));
+        $lockedContent = new Shortcodes(lock_tag: getSetting('type'));
     }
 
     return $lockedContent;
@@ -178,7 +178,7 @@ function shortcodeObject(): Shortcodes
  * @throws RandomException
  * @throws SodiumException
  */
-function hideMessageContents(array $params, string $message): string
+function hideMessageContents(array $attributes, string $message): string
 {
     global $mybb, $post, $lang, $db;
 
@@ -212,8 +212,8 @@ function hideMessageContents(array $params, string $message): string
         $thread_id = (int)$post['tid'];
     }
 
-    if (isset($params[0]) && my_strpos($params[0], '=') === 0) {
-        $params['content_points'] = (float)str_replace('=', '', $params[0]);
+    if (isset($attributes[0]) && my_strpos($attributes[0], '=') === 0) {
+        $attributes['content_points'] = (float)str_replace('=', '', $attributes[0]);
     }
 
     $paid = false;
@@ -228,21 +228,21 @@ function hideMessageContents(array $params, string $message): string
 
         if (!in_array($forum_id, $disabled) || $mybb->settings['lock_disabled_forums'] === -1) {
             // does the content have a price? can the user set the price?
-            if (!isset($params['content_points'])) {
+            if (!isset($attributes['content_points'])) {
                 // if not, do we have a default price?
                 if (getSetting('default_price') > 0) {
-                    $params['content_points'] = (float)getSetting('default_price');
+                    $attributes['content_points'] = (float)getSetting('default_price');
                 } else {
-                    $params['content_points'] = null;
+                    $attributes['content_points'] = null;
                 }
             } elseif (empty($mybb->settings['lock_allow_user_prices']) && getSetting('default_price') > 0) {
-                $params['content_points'] = (float)getSetting('default_price');
+                $attributes['content_points'] = (float)getSetting('default_price');
             }
 
             // is the cost an actual number?
-            if (is_numeric($params['content_points'])) {
+            if (is_numeric($attributes['content_points'])) {
                 // cost must be valid, because numbers aren't evil.
-                $content_points = (float)$params['content_points'];
+                $content_points = (float)$attributes['content_points'];
 
                 // check to see whether the user has purchased this post's content
                 $paid = (bool)purchaseLogGet(
@@ -269,7 +269,7 @@ function hideMessageContents(array $params, string $message): string
     }
 
     // if no title has been set, set a default title.
-    $title = $params['title'] ?? $lang->lock_title;
+    $title = $attributes['title'] ?? $lang->lock_title;
 
     // if the user is not the OP, and has not been exempt from having hidden content
     if (
@@ -278,21 +278,21 @@ function hideMessageContents(array $params, string $message): string
     ) {
         // if the user isn't logged in, tell them to login or register.
         if (!$current_user_id) {
-            $return = $lang->sprintf($lang->lock_nopermission_guest, $mybb->settings['bburl']);
+            $contents = $lang->sprintf($lang->lock_nopermission_guest, $mybb->settings['bburl']);
             // if they are logged in, but the item has a price that they haven't paid yet, tell them how they can pay for it.
         } elseif (isset($content_points) && !$paid && function_exists('newpoints_format_points')) {
             // place the info we need, into an array
-            $info = [
+            $contentDetails = [
                 'post_id' => $post_id,
                 'content_points' => $content_points
             ];
 
             // encode the information as json, for safe transit
-            $info = json_encode($info);
+            $contentDetails = json_encode($contentDetails);
 
             // encrypt the json, and encode it as base64; so it can be submitted in a form.
 
-            $info = base64_encode(safeEncrypt($info, $mybb->post_code));
+            $contentDetails = base64_encode(safeEncrypt($contentDetails, $mybb->post_code));
 
             static $posts_content_points = [];
 
@@ -309,26 +309,30 @@ function hideMessageContents(array $params, string $message): string
                 strip_tags(newpoints_format_points((float)$mybb->user['newpoints']))
             );
 
-            $lang_confirm = $lang->sprintf($lang->lock_purchase_confirm, $points);
-            $lock_purchase = $lang->sprintf($lang->lock_purchase, $points);
+            $confirmMessage = $lang->sprintf($lang->lock_purchase_confirm, $points);
+            $buttonText = $lang->sprintf($lang->lock_purchase, $points);
+
+            $threadUrl = get_thread_link($thread_id);
+
+            $formMessage = $lang->lock_purchase_desc;
 
             // build the return button.
-            $return = eval(getTemplate('form', false));
+            $contents = eval(getTemplate('form', false));
             // if the user doesn't need to pay, but hasn't posted
 
         } elseif (!$paid && !$posted) {
             // tell them to reply to the thread.
 
-            $return = $lang->lock_nopermission_reply;
+            $contents = $lang->lock_nopermission_reply;
             // all is good.
         } else {
             // give them the content.
-            $return = $message;
+            $contents = $message;
         }
         // bypass the hide tags.
     } else {
         // give them the content
-        $return = $message;
+        $contents = $message;
     }
 
     $cost_desc = '';

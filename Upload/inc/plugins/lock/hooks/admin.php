@@ -32,8 +32,8 @@ namespace LockContent\Hooks\Admin;
 
 use MyBB;
 
-use function LockContent\Admin\dbFields;
 use function LockContent\Core\loadLanguage;
+use function LockContent\Admin\dbFields;
 
 function admin_config_plugins_deactivate(): void
 {
@@ -58,19 +58,19 @@ function admin_config_plugins_deactivate(): void
     }
 }
 
-function newpoints_admin_user_groups_edit_graph_start(array &$hook_arguments): array
+function newpoints_admin_user_groups_edit_graph_start(array &$hookArguments): array
 {
     loadLanguage();
 
-    $hook_arguments['data_fields'] = array_merge(
-        $hook_arguments['data_fields'],
+    $hookArguments['data_fields'] = array_merge(
+        $hookArguments['data_fields'],
         dbFields()['usergroups'],
     );
 
-    return $hook_arguments;
+    return $hookArguments;
 }
 
-function newpoints_admin_user_groups_edit_commit_start(array &$hook_arguments): array
+function newpoints_admin_user_groups_edit_commit_start(array &$hookArguments): array
 {
-    return newpoints_admin_user_groups_edit_graph_start($hook_arguments);
+    return newpoints_admin_user_groups_edit_graph_start($hookArguments);
 }

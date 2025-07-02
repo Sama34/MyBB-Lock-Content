@@ -1,7 +1,7 @@
-<form method="post">
-    {$lang->lock_purchase_desc}
-    <input type="submit" class="button" value="{$lock_purchase}" onclick="return confirm('{$lang_confirm}');"/>
+<form method="post" action="{$mybb->settings['bburl']}/{$threadUrl}">
+    <div>{$formMessage}</div>
+    <input type="submit" class="button" value="{$buttonText}" onclick="return confirm('{$confirmMessage}');"/>
     <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
-    <input type="hidden" name="info" value="{$info}"/>
+    <input type="hidden" name="info" value="{$contentDetails}"/>
     <input type="hidden" name="action" value="purchase"/>
 </form>

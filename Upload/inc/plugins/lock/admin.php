@@ -34,7 +34,6 @@ use DirectoryIterator;
 use stdClass;
 
 use function LockContent\Core\loadLanguage;
-
 use function LockContent\Core\purchaseLogGet;
 use function LockContent\Core\purchaseLogInsert;
 

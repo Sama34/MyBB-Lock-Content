@@ -66,8 +66,8 @@ function datahandler_post_validate_post(PostDataHandler &$dataHandler): PostData
     $message = $dataHandler->data['message'];
 
     if (
-        !shortcodeObject()->shortcodes ||
-        my_strpos($message, '[' . shortcodeObject()->get_tag()) === false
+        !shortcodeObject()->shortCodes ||
+        my_strpos($message, '[' . shortcodeObject()->get_lock_tag()) === false
     ) {
         return $dataHandler;
     }

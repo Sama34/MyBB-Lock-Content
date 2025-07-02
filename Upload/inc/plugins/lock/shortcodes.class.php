@@ -43,7 +43,7 @@ if (!defined('IN_MYBB')) {
  **/
 class Shortcodes
 {
-    public array $shortcodes = [];
+    public array $shortCodes = [];
 
     public static bool $strict = true;
 
@@ -51,20 +51,20 @@ class Shortcodes
      * @throws RandomException
      */
     public function __construct(
-        public readonly string $tag = 'hide',
-        private string $highlight_replacement = '',
-        private readonly string $default_callback = 'LockContent\Core\hideMessageContents',
+        public readonly string $lock_tag = 'hide',
+        private string $highlightReplacement = '',
+        private readonly string $defaultCallback = 'LockContent\Core\hideMessageContents',
     ) {
-        if ($this->highlight_replacement === '') {
+        if ($this->highlightReplacement === '') {
             $this->refresh_highlight_replacement();
         }
 
-        $this->add($this->get_tag(), $this->default_callback);
+        $this->add($this->get_lock_tag(), $this->defaultCallback);
     }
 
-    public function get_tag(): string
+    public function get_lock_tag(): string
     {
-        return $this->tag;
+        return $this->lock_tag;
     }
 
     /**
@@ -72,25 +72,25 @@ class Shortcodes
      */
     public function refresh_highlight_replacement(): void
     {
-        $this->highlight_replacement = bin2hex(random_bytes(10));
+        $this->highlightReplacement = bin2hex(random_bytes(10));
     }
 
     public function get_highlight_replacement(): string
     {
-        return $this->highlight_replacement;
+        return $this->highlightReplacement;
     }
 
-    private function add(string $shortcode, callable $function): void
+    private function add(string $shortCode, callable $callback): void
     {
-        if (is_callable($function)) {
-            $this->shortcodes[$shortcode] = $function;
+        if (is_callable($callback)) {
+            $this->shortCodes[$shortCode] = $callback;
         }
     }
 
     //everything below this line was pretty much pulled from wordpress, no need to reinvent the wheel.
     private function shortcode_regex(): string
     {
-        $tagnames = array_keys($this->shortcodes);
+        $tagnames = array_keys($this->shortCodes);
         $tagregexp = join('|', array_map('preg_quote', $tagnames));
 
         // WARNING! Do not change this regex without changing do_shortcode_tag() and strip_shortcode_tag()
@@ -132,7 +132,7 @@ class Shortcodes
             return $message;
         }
 
-        if (empty($this->shortcodes)) {
+        if (empty($this->shortCodes)) {
             return $message;
         }
 
@@ -141,71 +141,85 @@ class Shortcodes
         return preg_replace_callback("/$pattern/s", Shortcodes::run_shortcode(...), $message);
     }
 
-    private function run_shortcode(array $m): string
+    private function run_shortcode(array $message): string
     {
         // allow [[foo]] syntax for escaping a tag
-        if ($m[1] === '[' && $m[6] === ']') {
-            return substr($m[0], 1, -1);
+        if ($message[1] === '[' && $message[6] === ']') {
+            return substr($message[0], 1, -1);
         }
 
-        $foundTag = $m[2];
-        $attr = self::fetch_attributes($m[3]);
+        $foundTag = $message[2];
 
-        if (isset($m[5])) {
+        $attributes = self::fetch_attributes($message[3]);
+
+        if (isset($message[5])) {
             // enclosing tag - extra parameter
-            return $m[1] . call_user_func($this->shortcodes[$foundTag], $attr, $m[5], $foundTag) . $m[6];
+            return $message[1] . call_user_func(
+                    $this->shortCodes[$foundTag],
+                    $attributes,
+                    $message[5],
+                    $foundTag
+                ) . $message[6];
         } else {
             // self-closing tag
-            return $m[1] . call_user_func($this->shortcodes[$foundTag], $attr, null, $foundTag) . $m[6];
+            return $message[1] . call_user_func(
+                    $this->shortCodes[$foundTag],
+                    $attributes,
+                    null,
+                    $foundTag
+                ) . $message[6];
         }
     }
 
     private static function fetch_attributes(string $text): array
     {
-        $atts = [];
+        $attributes = [];
+
         $pattern = '/(\w+)\s*=\s*"([^"]*)"(?:\s|$)|(\w+)\s*=\s*\'([^\']*)\'(?:\s|$)|(\w+)\s*=\s*([^\s\'"]+)(?:\s|$)|"([^"]*)"(?:\s|$)|(\S+)(?:\s|$)/';
+
         $text = preg_replace('/[\x{00a0}\x{200b}]+/u', ' ', $text);
+
         if (preg_match_all($pattern, $text, $match, PREG_SET_ORDER)) {
             foreach ($match as $m) {
                 if (!empty($m[1])) {
-                    $atts[strtolower($m[1])] = stripcslashes($m[2]);
+                    $attributes[strtolower($m[1])] = stripcslashes($m[2]);
                 } elseif (!empty($m[3])) {
-                    $atts[strtolower($m[3])] = stripcslashes($m[4]);
+                    $attributes[strtolower($m[3])] = stripcslashes($m[4]);
                 } elseif (!empty($m[5])) {
-                    $atts[strtolower($m[5])] = stripcslashes($m[6]);
+                    $attributes[strtolower($m[5])] = stripcslashes($m[6]);
                 } elseif (isset($m[7]) and strlen($m[7])) {
-                    $atts[] = stripcslashes($m[7]);
+                    $attributes[] = stripcslashes($m[7]);
                 } elseif (isset($m[8])) {
-                    $atts[] = stripcslashes($m[8]);
+                    $attributes[] = stripcslashes($m[8]);
                 }
             }
         } else {
-            $atts[] = ltrim($text);
+            $attributes[] = ltrim($text);
         }
 
-        return $atts;
+        return $attributes;
     }
 
-    public function get_higher_points_from_message(string $message, float &$higher_content_points): float
+    public function get_higher_points_from_message(string $message, float &$higherContentPoints): float
     {
         $pattern = self::shortcode_regex();
 
         preg_match_all("/$pattern/s", $message, $matches, PREG_SET_ORDER);
 
-        $higher_content_points = 0;
+        $higherContentPoints = 0;
 
         foreach ($matches as $match) {
             if (
                 empty($match[0]) ||
-                my_strpos($match[0], '[' . $this->get_tag() . '=') === false ||
+                my_strpos($match[0], '[' . $this->get_lock_tag() . '=') === false ||
                 !($content_points = (float)str_replace('=', '', $match[3]))
             ) {
                 continue;
             }
 
-            $higher_content_points = max($higher_content_points, $content_points);
+            $higherContentPoints = max($higherContentPoints, $content_points);
         }
 
-        return $higher_content_points;
+        return $higherContentPoints;
     }
 } // END class Shortcodes

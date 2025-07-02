@@ -80,19 +80,19 @@ function showthread_start(): void
 
     $json = safeDecrypt(base64_decode($mybb->get_input('info')), $mybb->post_code);
 
-    $info = json_decode($json);
+    $contentDetails = json_decode($json);
 
     global $lang;
 
-    if (empty($info) || !is_object($info)) {
+    if (empty($contentDetails) || !is_object($contentDetails)) {
         error($lang->error_invalidpost);
     }
 
     // if the data is indeed json data
     // if the data has been successfully turned back into an object.
-    $content_points = (float)$info->content_points;
+    $content_points = (float)$contentDetails->content_points;
 
-    $post_id = (int)$info->post_id;
+    $post_id = (int)$contentDetails->post_id;
 
     if (!$content_points ||
         !$post_id ||
@@ -199,7 +199,11 @@ function parse_message_start11(string &$message): string
     if (!empty($mybb->input['highlight'])) {
         shortcodeObject()->refresh_highlight_replacement();
 
-        $message = str_replace(shortcodeObject()->get_tag(), shortcodeObject()->get_highlight_replacement(), $message);
+        $message = str_replace(
+            shortcodeObject()->get_lock_tag(),
+            shortcodeObject()->get_highlight_replacement(),
+            $message
+        );
     }
 
     return $message;
@@ -210,7 +214,11 @@ function parse_message09(string &$message): string
     global $mybb;
 
     if (!empty($mybb->input['highlight'])) {
-        $message = str_replace(shortcodeObject()->get_highlight_replacement(), shortcodeObject()->get_tag(), $message);
+        $message = str_replace(
+            shortcodeObject()->get_highlight_replacement(),
+            shortcodeObject()->get_lock_tag(),
+            $message
+        );
     }
 
     return $message;
@@ -223,7 +231,7 @@ function parse_message_end(string &$message): string
 
 function parse_quoted_message(array &$quoted_post): array
 {
-    $tag = shortcodeObject()->get_tag();
+    $tag = shortcodeObject()->get_lock_tag();
 
     $quoted_post['message'] = preg_replace(
         '#\[' . $tag . '(.*)\[/' . $tag . '\]#is',
