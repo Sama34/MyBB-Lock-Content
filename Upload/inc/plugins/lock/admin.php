@@ -80,8 +80,8 @@ function pluginInfo(): array
         'website' => 'https://ougc.network',
         'author' => '<a href="https://community.mybb.com/user-99749.html">Neko</a> & Omar G.',
         'authorsite' => 'https://ougc.network',
-        'version' => '1.8.37',
-        'versioncode' => 1837,
+        'version' => '2.0.0',
+        'versioncode' => 2000,
         'compatibility' => '18*',
         'codename' => 'ougc_lock',
         'pl' => [
