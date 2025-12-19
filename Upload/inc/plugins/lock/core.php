@@ -219,7 +219,7 @@ function hideMessageContents(array $attributes, string $message): string
     // does the user have to pay for the content?
     if (function_exists('newpoints_format_points') &&
         (!empty($mybb->settings['lock_purchases_enabled']) || getSetting('default_price') > 0)) {
-        // is the pay to view feature allowed in this forum?
+        // is the pay-to-view feature allowed in this forum?
         $disabled = explode(',', $mybb->settings['lock_disabled_forums']);
 
         if (!in_array($forum_id, $disabled) || $mybb->settings['lock_disabled_forums'] === -1) {
@@ -237,7 +237,7 @@ function hideMessageContents(array $attributes, string $message): string
 
             // is the cost an actual number?
             if (is_numeric($attributes['content_points'])) {
-                // cost must be valid, because numbers aren't evil.
+                // the cost must be valid, because numbers aren't evil.
                 $content_points = (float)$attributes['content_points'];
 
                 // check to see whether the user has purchased this post's content

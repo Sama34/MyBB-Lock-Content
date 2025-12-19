@@ -39,17 +39,15 @@ use function LockContent\Core\purchaseLogGet;
 use function LockContent\Core\purchaseLogInsert;
 use function LockContent\Core\safeDecrypt;
 use function LockContent\Core\shortcodeObject;
-use function Newpoints\Core\language_load;
 use function NewPoints\Core\log_add;
 use function NewPoints\Core\points_add_simple;
 use function NewPoints\Core\points_subtract;
-
 use function Newpoints\Core\post_parser;
 
 use const NewPoints\Core\LOGGING_TYPE_CHARGE;
 use const NewPoints\Core\LOGGING_TYPE_INCOME;
 
-function global_start(): bool
+function global_start(): void
 {
     global $templatelist;
 
@@ -62,8 +60,6 @@ function global_start(): bool
     if (THIS_SCRIPT == 'showthread.php') {
         $templatelist .= ', lock_' . implode(', lock_', ['form', 'wrapper']);
     }
-
-    return true;
 }
 
 function showthread_start(): void
@@ -250,7 +246,7 @@ function parse_quoted_message(array &$quoted_post): array
     return $quoted_post;
 }
 
-function newpoints_logs_log_row(): bool
+function newpoints_logs_log_row(): void
 {
     global $log_data;
 
@@ -258,7 +254,7 @@ function newpoints_logs_log_row(): bool
         'lock_content_purchase',
         'lock_content_sell',
     ])) {
-        return false;
+        return;
     }
 
     global $lang;
@@ -317,11 +313,9 @@ function newpoints_logs_log_row(): bool
             $user_data['uid']
         );
     }
-
-    return true;
 }
 
-function newpoints_logs_end(): bool
+function newpoints_logs_end(): void
 {
     global $lang;
     global $action_types;
@@ -337,6 +331,19 @@ function newpoints_logs_end(): bool
             $action_type = $lang->lock_content_newpoints_page_logs_sell;
         }
     }
+}
 
-    return true;
+function text_parse_message(string &$message): string
+{
+    global $search, $post;
+
+    if (THIS_SCRIPT !== 'search.php' || empty($post['pid']) || !isset($search['resulttype']) || $search['resulttype'] !== 'posts') {
+        return $message;
+    }
+
+    $post_message = ['message' => &$message];
+
+    parse_quoted_message($post_message);
+
+    return $message;
 }
